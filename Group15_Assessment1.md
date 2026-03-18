@@ -1,3 +1,21 @@
+Section 1:
+
+1. Contribution & Grading
+- Each member will be assessed using structured peer evaluation for their individual performance towards the assessment. Core performance indicators will include attendance, reliability, communication, collaboration and quality of work.
+- Weekly meeting minutes will be documented to provide objective evidence for peer evaluation.
+- Each member will ensure their individual output meets the group’s requirements and deadlines. 
+
+2. Communication
+- Platform: Microsoft Teams as the primary platform for file sharing and online discussions.
+- GitHub Issues: AI Copilot as the primary tool for solving and reviewing any GitHub or VSCode issues.
+- Response Time: A formal commitment to response time within 24 hours for messages to be acknowledged.
+- Meeting Style: Weekly stand-ups for collaborative discussions to ensure active engagement.
+
+3. Task Allocation
+- Each member will be assigned to specific project roles and responsibilities. All individual tasks will be logged and tracked onto GitHub Repository to provide transparent and streamlined assessment progress.
+- Weekly deadlines will be implemented to monitor work progress and ensure accountability.
+- Team members must proactively report any issues that may delay progress to allow timely intervention. If a member is unavailable, workload will be redistributed to maintain consistent workflow to meet assessment goals. Consistent failure to meet individual responsibilities and deadlines will be notified to the Collaborative Learning Facilitator (CLF) to be resolved.
+
 Section 2:
 
 1. Key Milestones
