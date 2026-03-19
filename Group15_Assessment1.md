@@ -50,6 +50,7 @@ Section 2:
 - All work will be managed using a shared GitHub repository. Each member will work on their own branch and update the repository regularly. Changes will be reviewed before merging into the main branch. Testing will be conducted after major updates to ensure functionality.
 
 Section 3:
+
 In our team, we will talk about three points, which are working styles, conflict resolution and academic integrity. 
 
 1.As for working styles, before beginning our assessment, we will list our schedules and plans, such as the contents and requirements in this assessment. Also, if we have our schedules, then this can make us more flexible. For example, if we encounter some problems, then they can be solved through adjusting our plans and make our assessment better. 
