@@ -1,3 +1,9 @@
+# Assessment 1 - Group 15
+Members:
+Mishkatuz Zannat Moon (S385411)
+Thien Hau Ngo ()
+Yuanjian Dong ()
+
 Section 1:
 
 1. Contribution & Grading
