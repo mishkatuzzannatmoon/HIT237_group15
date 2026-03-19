@@ -48,3 +48,12 @@ Section 2:
 
 4. Integration Points
 - All work will be managed using a shared GitHub repository. Each member will work on their own branch and update the repository regularly. Changes will be reviewed before merging into the main branch. Testing will be conducted after major updates to ensure functionality.
+
+Section 3:
+In our team, we will talk about three points, which are working styles, conflict resolution and academic integrity. 
+
+1.As for working styles, before beginning our assessment, we will list our schedules and plans, such as the contents and requirements in this assessment. Also, if we have our schedules, then this can make us more flexible. For example, if we encounter some problems, then they can be solved through adjusting our plans and make our assessment better. 
+
+2.Secondly, when beginning our assessment, we should discuss first internally, such as the components of this assessment, what do we need to do and personal tasks. In the assessment, every group member in this team should make contribution and then do what we are supposed to do. Additionally, after finishing our own part, we should tell this to other team members about the contents in details and let them understand what you do so as to offer better suggestions and make revisions. This not only can avoid conflict within the team, but also make our assessment better and better.
+
+3.Another point that cannot be ignored is the academic integrity. This is very important thing, especially in our exams and assessment. The first point is no plagiarism, which means that we cannot copy contents from others, if we do that, this will not only influence yourself, but also bring some trouble for others. Also, we cannot do the assessment by using AI because this will neither improve yourself nor let universities believe you have the ability to finish the remaining studies. Therefore, we must understand the requirements of assessment and what we need to do before beginning.
