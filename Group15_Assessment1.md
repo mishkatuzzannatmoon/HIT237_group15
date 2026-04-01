@@ -45,11 +45,11 @@ Section 2:
 - Week 13: Assessment 4 submission.
 
 2. Task Breakdowns
-
-- Moon: Frontend development (templates, styling, user interface) and support in documentation (ADR contributions)  
-- Hau: Backend development, including models, database design, and relationships, with support in business logic  
-- Yuanjian: Views, business logic, and integration of components, with support in documentation (ADR contributions)  
-- All members will contribute to testing, debugging, documentation updates, and final integration.
+- Moon: Frontend development, including creating templates (upload, list, and detail pages), basic styling, and displaying data in the user interface. Also responsible for testing user interface functionality.
+- Hau: Backend development, including creating models (e.g., Recording, Species, Flag), defining database relationships, and contributing to Architectural Decision Records (ADR) related to data structure.
+- Peter: Views and business logic, including implementing class-based views (CBV), handling data retrieval using QuerySets, and connecting models to templates. Also supports testing of system functionality.
+- Emon: Architectural Decision Records (ADR) and integration, including documenting design decisions, ensuring components work together correctly, and supporting frontend tasks where needed.
+- All members will contribute to testing, debugging, documentation updates, and maintaining regular commits on GitHub.
 
 3. Internal Checkpoints
 - Weekly meetings will be held via Microsoft Teams to review progress and assign tasks. Each member will provide updates.
