@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Recording Detail</title>
+    <style>
+        body {
+            font-family: "Times New Roman", Times, serif;
+            margin: 40px;
+            background-color: #f4f6f8;
+            color: #333;
+        }
+
+        h1 {
+            color: #2c3e50;
+        }
+
+        .detail-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        p {
+            margin: 10px 0;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            color: #2c7a7b;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    {% if recording %}
+        <h1>{{ recording.species }}</h1>
+
+        <div class="detail-box">
+            <p><strong>Date:</strong> {{ recording.date }}</p>
+            <p><strong>Location:</strong> {{ recording.location }}</p>
+            <p><strong>Confidence:</strong> {{ recording.confidence_score }}</p>
+        </div>
+    {% else %}
+        <p>Recording not found.</p>
+    {% endif %}
+
+    <a href="{% url 'recording_list' %}">Back to Recording List</a>
+</body>
+</html>
