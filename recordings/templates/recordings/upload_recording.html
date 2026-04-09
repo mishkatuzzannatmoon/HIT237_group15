@@ -56,9 +56,14 @@
         }
     </style>
 </head>
+
 <body>
-    <h1>Upload Recording</h1>
-    <p>This page will be used to add a new wildlife recording.</p>
+
+    <a href="{% url 'recording_list' %}">Recordings</a>
+    <hr>
+
+    <h1>Upload Wildlife Recording</h1>
+    <p>This page allows users to submit sightings of endangered species in the Northern Territory.</p>
 
     <div class="form-box">
         <form>
@@ -79,5 +84,9 @@
     </div>
 
     <a href="{% url 'recording_list' %}">Back to Recording List</a>
+
+    <hr>
+<p>NT Wildlife Recording System</p>
+
 </body>
 </html>
