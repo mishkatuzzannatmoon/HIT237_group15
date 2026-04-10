@@ -4,7 +4,7 @@
     <title>Recording List</title>
     <style>
         body {
-             font-family: "Times New Roman", Times, serif;
+            font-family: "Times New Roman", Times, serif;
             margin: 40px;
             background-color: #f4f6f8;
             color: #333;
@@ -52,9 +52,14 @@
         }
     </style>
 </head>
+
 <body>
-    <h1>All Recordings</h1>
-    <p>This page shows all submitted wildlife recordings.</p>
+
+    <a href="{% url 'recording_list' %}">Recordings</a>
+    <hr>
+
+    <h1>Wildlife Recordings in Northern Territory</h1>
+    <p>This page displays recorded sightings of endangered species in NT.</p>
 
     <a href="{% url 'upload_recording' %}" class="button">Upload New Recording</a>
 
@@ -70,7 +75,11 @@
             </div>
         {% endfor %}
     {% else %}
-        <p>No recordings found.</p>
+        <p>No wildlife recordings available.</p>
     {% endif %}
+
+<hr>
+<p>NT Wildlife Recording System</p>
+
 </body>
 </html>
