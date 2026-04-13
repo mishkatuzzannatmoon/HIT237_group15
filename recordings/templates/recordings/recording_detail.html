@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Recording Detail</title>
+    <title>NT Wildlife Recording System</title>
     <style>
         body {
             font-family: "Times New Roman", Times, serif;
@@ -41,11 +41,13 @@
 
 <body>
 
+    <h1>NT Wildlife Recording System</h1>
+
     <a href="{% url 'recording_list' %}">Recordings</a>
     <hr>
 
     {% if recording %}
-        <h1>{{ recording.species }}</h1>
+        <h2>{{ recording.species }}</h2>
 
         <div class="detail-box">
             <p><strong>Date:</strong> {{ recording.date }}</p>
@@ -57,7 +59,9 @@
     {% endif %}
 
     <a href="{% url 'recording_list' %}">Back to Recording List</a>
-<hr>
-<p>NT Wildlife Recording System</p>
+
+    <hr>
+    <p>NT Wildlife Recording System</p>
+
 </body>
 </html>

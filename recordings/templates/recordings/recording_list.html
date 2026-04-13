@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Recording List</title>
+    <title>NT Wildlife Recording System</title>
     <style>
         body {
             font-family: "Times New Roman", Times, serif;
@@ -55,10 +55,12 @@
 
 <body>
 
+    <h1>NT Wildlife Recording System</h1>
+
     <a href="{% url 'recording_list' %}">Recordings</a>
     <hr>
 
-    <h1>Wildlife Recordings in Northern Territory</h1>
+    <h2>Wildlife Recordings in Northern Territory</h2>
     <p>This page displays recorded sightings of endangered species in NT.</p>
 
     <a href="{% url 'upload_recording' %}" class="button">Upload New Recording</a>
@@ -78,8 +80,8 @@
         <p>No wildlife recordings available.</p>
     {% endif %}
 
-<hr>
-<p>NT Wildlife Recording System</p>
+    <hr>
+    <p>NT Wildlife Recording System</p>
 
 </body>
 </html>
