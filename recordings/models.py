@@ -33,7 +33,7 @@ class Location(models.Model):
     longitude = models.DecimalField(max_digits=9, decimal_places=6, default=0.0)
  
     def __str__(self):
-        return self.name
+        return self.location_name
  
  
 class Recording(models.Model):
@@ -78,11 +78,17 @@ class Anomaly(models.Model):
         ('open', 'Open'),
     ]
 
+    ANOMALY_REASONS = [
+        ('misidentification', 'Misidentification'),
+        ('data_error', 'Data Error'),
+        ('unusual_location', 'Unusual Location'),
+        ('other', 'Other'),
+    ]
+
     recording = models.ForeignKey(Recording, on_delete=models.CASCADE,related_name='anomalies')
-    reason = models.CharField(max_length=200, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')   
-    
- 
+    reason = models.CharField(max_length=20, choices=ANOMALY_REASONS)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+
     class Meta:
         ordering = ['-id']         
  
