@@ -72,20 +72,35 @@ class Recording(models.Model):
  
 class Anomaly(models.Model):
 
+    STATUS_CHOICES = [        
+        ('resolved', 'Resolved'),
+        ('under_review', 'Under Review'),
+        ('open', 'Open'),
+    ]
+
     recording = models.ForeignKey(Recording, on_delete=models.CASCADE,related_name='anomalies')
     reason = models.CharField(max_length=200, blank=True)
-    flagged_anomaly = models.BooleanField(default=False) 
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')   
+    
  
     class Meta:
-        ordering = ['-id']   
+        ordering = ['-id']         
  
     def __str__(self):
-        return f"Anomaly on {self.recording}"
+        return f"Anomaly [{self.get_status_display()}] on {self.recording}"
+ 
+    def is_flagged(self):
+        return self.status == 'open'
+ 
+    def needs_review(self):
+        return self.status in ('under_review', 'open')
  
     def save(self, *args, **kwargs):
-    
-        if self.recording.confidence_score < 50:
-            self.flagged_anomaly = True
+        score = self.recording.confidence_score  
+        if score < 50:
+            self.status = 'open'
+        elif score < 80:
+            self.status = 'under_review'
         else:
-            self.flagged_anomaly = False
+            self.status = 'resolved'
         super().save(*args, **kwargs)
