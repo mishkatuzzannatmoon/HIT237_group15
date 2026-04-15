@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.views import View
 
 recordings_data = [
     {
@@ -24,16 +25,36 @@ recordings_data = [
     }
 ]
 
-def recording_list(request):
-    return render(request, 'recordings/recording_list.html', {"recordings": recordings_data})
 
-def upload_recording(request):
-    return render(request, 'recordings/upload_recording.html')
+class RecordingListView(View):
+    def get(self, request):
+        return render(request, "recordings/recording_list.html", {
+            "recordings": recordings_data
+        })
 
-def recording_detail(request, id):
-    selected = None
-    for recording in recordings_data:
-        if recording["id"] == id:
-            selected = recording
-            break
-    return render(request, 'recordings/recording_detail.html', {"recording": selected})
+
+class RecordingDetailView(View):
+    def get(self, request, id):
+        selected_recording = None
+
+        for recording in recordings_data:
+            if recording["id"] == id:
+                selected_recording = recording
+                break
+
+        return render(request, "recordings/recording_detail.html", {
+            "recording": selected_recording
+        })
+
+
+class UploadRecordingView(View):
+    def get(self, request):
+        return render(request, "recordings/upload_recording.html")
+
+    def post(self, request):
+        species = request.POST.get("species")
+        message = f"{species} uploaded successfully!"
+
+        return render(request, "recordings/upload_recording.html", {
+            "message": message
+        })
