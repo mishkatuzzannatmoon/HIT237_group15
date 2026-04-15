@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Anomalies Needing Review</title>
+</head>
+<body>
+    <h1>Anomalies Needing Review</h1>
+
+    {% if anomalies %}
+        {% for anomaly in anomalies %}
+            <div style="border:1px solid #ccc; padding:10px; margin:10px;">
+                <p><strong>Recording:</strong> {{ anomaly.recording }}</p>
+                <p><strong>Reason:</strong> {{ anomaly.get_reason_display }}</p>
+                <p><strong>Status:</strong> {{ anomaly.get_status_display }}</p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No anomalies needing review.</p>
+    {% endif %}
+</body>
+</html>

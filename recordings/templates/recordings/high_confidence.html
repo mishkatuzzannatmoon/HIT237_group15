@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>High Confidence Recordings</title>
+</head>
+<body>
+    <h1>High Confidence Recordings</h1>
+
+    {% if recordings %}
+        {% for recording in recordings %}
+            <div style="border:1px solid #ccc; padding:10px; margin:10px;">
+                <p><strong>Species:</strong> {{ recording.species }}</p>
+                <p><strong>Location:</strong> {{ recording.location }}</p>
+                <p><strong>Date:</strong> {{ recording.date_recorded }}</p>
+                <p><strong>Confidence:</strong> {{ recording.confidence_score }}</p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No high confidence recordings available.</p>
+    {% endif %}
+</body>
+</html>
