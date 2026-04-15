@@ -1,180 +1,91 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.contrib.auth.models import User
 from django.utils import timezone
-from datetime import timedelta
  
-
 class Species(models.Model):
-
-    CONSERVATION_CHOICES = [
-        ('LC', 'Least Concern'),
-        ('NT', 'Near Threatened'),
+ 
+    CONSERVATION_CHOICES = [       
         ('VU', 'Vulnerable'),
         ('EN', 'Endangered'),
         ('CR', 'Critically Endangered'),
+        ('EX', 'Extinct'),
     ]
  
     common_name = models.CharField(max_length=100)
-    scientific_name = models.CharField(max_length=100, unique=True)
+    scientific_name = models.CharField(max_length=100, unique=True)  
     description = models.TextField(blank=True)
-    conservation_status = models.CharField(
-        max_length=2,
-        choices=CONSERVATION_CHOICES,
-        default='LC',
-    )
+    conservation_status = models.CharField(max_length=2, choices=CONSERVATION_CHOICES, default='VU') 
  
     class Meta:
-        ordering = ['common_name']
-        verbose_name_plural = 'Species'
+        ordering = ['common_name']  
  
     def __str__(self):
         return f"{self.common_name} ({self.scientific_name})"
  
-    def is_threatened(self):
+    def threatened(self):
         return self.conservation_status in ('VU', 'EN', 'CR')
+ 
 
- 
 class Location(models.Model):
- 
+
     location_name = models.CharField(max_length=100)
-    region = models.CharField(max_length=100, blank=True)
-    latitude = models.DecimalField(
-        max_digits=9, decimal_places=6,
-        null=True, blank=True,
-    )
-    longitude = models.DecimalField(
-        max_digits=9, decimal_places=6,
-        null=True, blank=True,
-    )
- 
-    class Meta:
-        ordering = ['location_name']
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, default=0.0) 
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, default=0.0)
  
     def __str__(self):
-        return self.location_name
-
-    def has_coordinates(self):
-        return self.latitude is not None and self.longitude is not None
-    
+        return self.name
+ 
  
 class Recording(models.Model):
 
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='recordings',
-        null=True,
-        blank=True,
-    )
-    species = models.ForeignKey(
-        Species,
-        on_delete=models.CASCADE,      
-        related_name='recordings',
-    )
-    location = models.ForeignKey(
-        Location,
-        on_delete=models.SET_NULL,     
-        null=True,
-        blank=True,
-        related_name='recordings',
-    )
- 
-    audio_file = models.FileField(upload_to='recordings/%Y/%m/', null=True, blank=True)  
-    recorded_at = models.DateTimeField()
-    uploaded_at = models.DateTimeField(default=timezone.now)
- 
-   
-    confidence_score = models.FloatField(
-        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
-        help_text='Confidence that the species was correctly identified (0.0–1.0)',
-    )
- 
-    notes = models.TextField(blank=True)
- 
-    class Meta:
-        ordering = ['-recorded_at']     
- 
-    def __str__(self):
-        return f"{self.species.common_name} at {self.location} ({self.recorded_at.date()})"
- 
-    def confidence_percentage(self):
-        return f"{self.confidence_score * 100:.1f}%"
- 
-    def is_high_confidence(self):
-        return self.confidence_score >= 0.8
- 
-    def has_anomalies(self):
-        return self.anomalies.exclude(status='resolved').exists()
- 
-    @classmethod
-    def recent(cls, days=30):
-        cutoff = timezone.now() - timedelta(days=days)
-        return cls.objects.filter(recorded_at__gte=cutoff)
- 
-    @classmethod
-    def by_threatened_species(cls):
-        
-        threatened_statuses = ('VU', 'EN', 'CR')
-        return cls.objects.filter(
-            species__conservation_status__in=threatened_statuses
-        ).select_related('species', 'location', 'user')
- 
-
-class Anomaly(models.Model):
- 
-    STATUS_CHOICES = [
-        ('open', 'Open'),
-        ('under_review', 'Under Review'),
-        ('resolved', 'Resolved'),
-        ('dismissed', 'Dismissed'),
+    RECORD_CHOICES = [              
+        ('human_observation', 'Human Observation'),
+        ('machine_observation', 'Machine Observation'),
+        ('preserved_specimen', 'Preserved Specimen'),
+        ('material_sample', 'Material Sample'),
     ]
  
-    recording = models.ForeignKey(
-        Recording,
-        on_delete=models.CASCADE,      
-        related_name='anomalies',
-    )
-    flagged_by = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,       
-        related_name='flagged_anomalies',
-    )
-    reviewed_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,      
-        null=True,
-        blank=True,
-        related_name='reviewed_anomalies',
-    )
- 
-    reason = models.CharField(max_length=200)
-    flagged_at = models.DateTimeField(default=timezone.now)
-    reviewed_at = models.DateTimeField(null=True, blank=True)
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='open',                
-    )
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='recordings', null=True, blank=True)
+    species = models.ForeignKey(Species, on_delete=models.CASCADE, related_name='recordings', null=True, blank=True)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='recordings', null=True, blank=True)
+    record_type = models.CharField(max_length=20, choices=RECORD_CHOICES, default='human_observation')
+    date_recorded = models.DateField(default=timezone.now)
+    confidence_score = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)], default = 0, help_text='Confidence score from 0 to 100')
  
     class Meta:
-        ordering = ['-flagged_at']    
-        verbose_name_plural = 'Anomalies'
+        ordering = ['-date_recorded']  
  
     def __str__(self):
-        return f"Anomaly [{self.get_status_display()}] on {self.recording}"
+        return f"{self.species.common_name} — {self.date_recorded}"
  
-    def is_open(self):
-        return self.status == 'open'
+    def high_confidence(self):
+        return self.confidence_score >= 80
  
-    def resolve(self, reviewer):
-        self.status = 'resolved'
-        self.reviewed_by = reviewer
-        self.reviewed_at = timezone.now()
-        self.save()
+    def confidence_label(self):
+        if self.confidence_score >= 80:
+            return 'High'
+        elif self.confidence_score >= 50:
+            return 'Medium'
+        else:
+            return 'Low'
  
-    def dismiss(self, reviewer):
-        self.status = 'dismissed'
-        self.reviewed_by = reviewer
-        self.reviewed_at = timezone.now()
-        self.save()
+ 
+class Anomaly(models.Model):
+
+    recording = models.ForeignKey(Recording, on_delete=models.CASCADE,related_name='anomalies')
+    reason = models.CharField(max_length=200, blank=True)
+    flagged_anomaly = models.BooleanField(default=False) 
+ 
+    class Meta:
+        ordering = ['-id']   
+ 
+    def __str__(self):
+        return f"Anomaly on {self.recording}"
+ 
+    def save(self, *args, **kwargs):
+    
+        if self.recording.confidence_score < 50:
+            self.flagged_anomaly = True
+        else:
+            self.flagged_anomaly = False
+        super().save(*args, **kwargs)
