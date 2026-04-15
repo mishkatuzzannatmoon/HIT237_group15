@@ -68,7 +68,11 @@
     <p>This page allows users to submit sightings of endangered species in the Northern Territory.</p>
 
     <div class="form-box">
-        <form>
+        {% if message %}
+    <p style="color: green; font-weight: bold;">{{ message }}</p>
+{% endif %}
+        <form method="post">
+    {% csrf_token %}
             <p>Species:</p>
             <input type="text" name="species">
 
