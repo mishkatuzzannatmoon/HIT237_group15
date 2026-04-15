@@ -1,7 +1,12 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+from django.db.models import QuerySet
  
+class SpeciesQuerySet(QuerySet):
+    def threatened(self):
+        return self.filter(conservation_status__in=['VU', 'EN', 'CR'])
+
 class Species(models.Model):
  
     CONSERVATION_CHOICES = [       
@@ -24,6 +29,8 @@ class Species(models.Model):
  
     def threatened(self):
         return self.conservation_status in ('VU', 'EN', 'CR')
+        
+objects = SpeciesQuerySet.as_manager()
  
 
 class Location(models.Model):
@@ -35,6 +42,15 @@ class Location(models.Model):
     def __str__(self):
         return self.location_name
  
+class RecordingQuerySet(QuerySet):
+    def high_confidence(self):
+        return self.filter(confidence_score__gte=80)
+
+    def medium_confidence(self):
+        return self.filter(confidence_score__gte=50, confidence_score__lt=80)
+
+    def low_confidence(self):
+        return self.filter(confidence_score__lt=50)
  
 class Recording(models.Model):
 
@@ -69,6 +85,18 @@ class Recording(models.Model):
         else:
             return 'Low'
  
+objects = RecordingQuerySet.as_manager()
+
+class AnomalyQuerySet(QuerySet):
+    def flagged(self):
+        return self.filter(status='open')
+
+    def needs_review(self):
+        return self.filter(status__in=['open', 'under_review'])
+
+    def resolved(self):
+        return self.filter(status='resolved')
+
  
 class Anomaly(models.Model):
 
@@ -110,3 +138,5 @@ class Anomaly(models.Model):
         else:
             self.status = 'resolved'
         super().save(*args, **kwargs)
+
+objects = AnomalyQuerySet.as_manager()
