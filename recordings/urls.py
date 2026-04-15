@@ -1,8 +1,8 @@
 from django.urls import path
-from . import views
+from .views import RecordingListView, RecordingDetailView, UploadRecordingView
 
 urlpatterns = [
-    path('', views.recording_list, name='recording_list'),
-    path('upload/', views.upload_recording, name='upload_recording'),
-    path('<int:id>/', views.recording_detail, name='recording_detail'),
+    path("", RecordingListView.as_view(), name="recording_list"),
+    path("upload/", UploadRecordingView.as_view(), name="upload_recording"),
+    path("<int:id>/", RecordingDetailView.as_view(), name="recording_detail"),
 ]
