@@ -50,3 +50,11 @@ class RecordingDetailView(View):
 class UploadRecordingView(View):
     def get(self, request):
         return render(request, "recordings/upload_recording.html")
+
+    def post(self, request):
+        species = request.POST.get("species")
+        message = f"{species} uploaded successfully!"
+
+        return render(request, "recordings/upload_recording.html", {
+            "message": message
+        })
