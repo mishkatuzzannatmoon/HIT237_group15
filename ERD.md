@@ -1,3 +1,4 @@
+````mermaid
 erDiagram
   USER {
     int id PK
@@ -37,4 +38,4 @@ erDiagram
   SPECIES ||--o{ RECORDING : "identified in"
   LOCATION ||--o{ RECORDING : "recorded at"
   RECORDING ||--o{ ANOMALY : "flagged as"
-  
+  ````
