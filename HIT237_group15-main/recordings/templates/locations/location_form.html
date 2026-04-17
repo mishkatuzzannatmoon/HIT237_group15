@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Location</title>
+    <style>
+        body {
+            font-family: "Times New Roman", Times, serif;
+            margin: 40px;
+            background-color: #f4f6f8;
+            color: #333;
+        }
+
+        h1 {
+            color: #2c3e50;
+        }
+
+        .form-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        button {
+            padding: 10px 16px;
+            background-color: #2c7a7b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #245f60;
+        }
+    </style>
+</head>
+<body>
+    <h1>Add Location</h1>
+
+    <div class="form-box">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Save Location</button>
+        </form>
+    </div>
+</body>
+</html>

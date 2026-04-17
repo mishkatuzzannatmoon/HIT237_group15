@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NT Wildlife Recording System</title>
+    <style>
+        body {
+            font-family: "Times New Roman", Times, serif;
+            margin: 40px;
+            background-color: #f4f6f8;
+            color: #333;
+        }
+
+        h1, h2 {
+            color: #2c3e50;
+        }
+
+        .form-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 700px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        p {
+            margin: 10px 0;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            margin-bottom: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: "Times New Roman", Times, serif;
+        }
+
+        textarea {
+            min-height: 140px;
+            resize: vertical;
+        }
+
+        button {
+            padding: 10px 16px;
+            background-color: #2c7a7b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #245f60;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            color: #2c7a7b;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>NT Wildlife Recording System</h1>
+    <a href="{% url 'species_list' %}">Species</a>
+    <hr>
+
+    <h2>Species Form</h2>
+
+    <div class="form-box">
+        <form method="post">
+            {% csrf_token %}
+
+            <p>Common name:</p>
+            {{ form.common_name }}
+
+            <p>Scientific name:</p>
+            {{ form.scientific_name }}
+
+            <p>Description:</p>
+            {{ form.description }}
+
+            <p>Conservation status:</p>
+            {{ form.conservation_status }}
+
+            <button type="submit">Save Species</button>
+        </form>
+    </div>
+
+    <a href="{% url 'species_list' %}">Back to Species List</a>
+
+</body>
+</html>

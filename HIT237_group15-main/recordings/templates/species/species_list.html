@@ -1,0 +1,12 @@
+<h1>All Species</h1>
+
+{% for s in species %}
+    <div style="border:1px solid #ccc; padding:10px; margin:10px;">
+        <h3>{{ s.common_name }}</h3>
+        <p><strong>Scientific Name:</strong> {{ s.scientific_name }}</p>
+        <p><strong>Status:</strong> {{ s.get_conservation_status_display }}</p>
+        <p>{{ s.description }}</p>
+    </div>
+{% empty %}
+    <p>No species found.</p>
+{% endfor %}

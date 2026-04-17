@@ -1,0 +1,10 @@
+<h1>Threatened Species</h1>
+
+{% for s in species %}
+    <div style="border:1px solid red; padding:10px; margin:10px;">
+        <h3>{{ s.common_name }}</h3>
+        <p><strong>Status:</strong> {{ s.get_conservation_status_display }}</p>
+    </div>
+{% empty %}
+    <p>No threatened species found.</p>
+{% endfor %}
