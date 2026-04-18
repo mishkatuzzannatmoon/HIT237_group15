@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}{{ object.common_name }} — NT Wildlife Recording System{% endblock %}
+{% block content %}
+<h1>{{ object.common_name }}</h1>
+<div class="card">
+    <p><strong>Scientific name:</strong> <em>{{ object.scientific_name }}</em></p>
+    <p><strong>Conservation status:</strong> {{ object.get_conservation_status_display }}</p>
+    <p><strong>Threatened:</strong> {% if object.is_threatened %}Yes{% else %}No{% endif %}</p>
+    <p><strong>Native to NT:</strong> {% if object.is_native %}Yes{% else %}No{% endif %}</p>
+    <p><strong>Not Native to NT:</strong> {% if object.not_native %}Yes{% else %}No{% endif %}</p>
+    {% if object.description %}<p><strong>Description:</strong> {{ object.description }}</p>{% endif %}
+    <div class="actions">
+        <a href="{% url 'species_update' object.pk %}" class="button-sm button-secondary">Edit</a>
+        <a href="{% url 'species_delete' object.pk %}" class="button-sm button-danger">Delete</a>
+    </div>
+</div>
+<h2>Recordings of this species</h2>
+{% for recording in object.recordings.all %}
+    <div class="card">
+        <p>{{ recording.location_name|default:"Unknown location" }} — {{ recording.recorded_at|date:"d M Y" }}</p>
+        <p>Confidence: {{ recording.confidence_score }}</p>
+        <a href="{% url 'recording_detail' recording.pk %}" class="button-sm">View</a>
+    </div>
+{% empty %}
+    <p class="empty">No recordings for this species yet.</p>
+{% endfor %}
+<a href="{% url 'species_list' %}" class="button-sm button-secondary">← Back to Species</a>
+{% endblock %}

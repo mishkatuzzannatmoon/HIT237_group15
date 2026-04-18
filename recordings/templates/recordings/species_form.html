@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
-{% block title %}{% if object %}Edit Recording{% else %}Add Recording{% endif %} — NT Wildlife Recording System{% endblock %}
+{% block title %}{% if object %}Edit Species{% else %}Add Species{% endif %} — NT Wildlife Recording System{% endblock %}
 {% block content %}
-<h1>{% if object %}Edit Recording{% else %}Add Recording{% endif %}</h1>
+<h1>{% if object %}Edit {{ object.common_name }}{% else %}Add Species{% endif %}</h1>
 <div class="card">
-    <form method="post" enctype="multipart/form-data">
+    <form method="post">
         {% csrf_token %}
         {% for field in form %}
             <label for="{{ field.id_for_label }}">{{ field.label }}</label>
@@ -14,8 +14,8 @@
                 {% endfor %}
             {% endif %}
         {% endfor %}
-        <button type="submit">{% if object %}Save Changes{% else %}Add Recording{% endif %}</button>
-        <a href="{% url 'recording_list' %}" class="button-sm button-secondary" style="margin-left:8px;">Cancel</a>
+        <button type="submit">{% if object %}Save Changes{% else %}Add Species{% endif %}</button>
+        <a href="{% url 'species_list' %}" class="button-sm button-secondary" style="margin-left:8px;">Cancel</a>
     </form>
 </div>
 {% endblock %}

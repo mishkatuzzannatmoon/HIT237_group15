@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}{{ title|default:"Species" }} — NT Wildlife Recording System{% endblock %}
+{% block content %}
+<h1>{{ title|default:"Species" }}</h1>
+<a href="{% url 'species_create' %}" class="button">+ Add Species</a>
+{% if species_list %}
+    <table>
+        <thead>
+            <tr>
+                <th>Common name</th>
+                <th>Scientific name</th>
+                <th>Conservation status</th>
+                <th>Endemic</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for species in species_list %}
+            <tr>
+                <td>{{ species.common_name }}</td>
+                <td><em>{{ species.scientific_name }}</em></td>
+                <td>
+                    {% if species.conservation_status == 'CR' %}
+                        <span class="badge badge-red">{{ species.get_conservation_status_display }}</span>
+                    {% elif species.conservation_status == 'EN' %}
+                        <span class="badge badge-orange">{{ species.get_conservation_status_display }}</span>
+                    {% elif species.conservation_status == 'VU' %}
+                        <span class="badge badge-yellow">{{ species.get_conservation_status_display }}</span>
+                    {% elif species.conservation_status == 'NT' %}
+                        <span class="badge badge-yellow">{{ species.get_conservation_status_display }}</span>
+                    {% elif species.conservation_status == 'LC' %}
+                        <span class="badge badge-green">{{ species.get_conservation_status_display }}</span>
+                    {% elif species.conservation_status == 'DD' %}
+                        <span class="badge badge-gray">{{ species.get_conservation_status_display }}</span>
+                    {% elif species.conservation_status == 'NE' %}
+                        <span class="badge badge-gray">{{ species.get_conservation_status_display }}</span>
+                    {% else %}
+                        <span class="badge badge-gray">{{ recording.species.get_conservation_status_display }}</span>
+                    {% endif %}
+                </td>
+                <td>{% if species.is_native %}Yes{% else %}No{% endif %}</td>
+                <td>
+                    <a href="{% url 'species_detail' species.pk %}" class="button-sm">View</a>
+                    <a href="{% url 'species_update' species.pk %}" class="button-sm button-secondary">Edit</a>
+                    <a href="{% url 'species_delete' species.pk %}" class="button-sm button-danger">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p class="empty">No species found.</p>
+{% endif %}
+{% endblock %}

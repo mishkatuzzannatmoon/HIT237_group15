@@ -1,67 +1,53 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>NT Wildlife Recording System</title>
-    <style>
-        body {
-            font-family: "Times New Roman", Times, serif;
-            margin: 40px;
-            background-color: #f4f6f8;
-            color: #333;
-        }
-
-        h1 {
-            color: #2c3e50;
-        }
-
-        .detail-box {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            max-width: 500px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-        }
-
-        p {
-            margin: 10px 0;
-        }
-
-        a {
-            display: inline-block;
-            margin-top: 20px;
-            color: #2c7a7b;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-
-<body>
-
-    <h1>NT Wildlife Recording System</h1>
-
-    <a href="{% url 'recording_list' %}">Recordings</a>
-    <hr>
-
-    {% if recording %}
-        <h2>{{ recording.species }}</h2>
-
-        <div class="detail-box">
-            <p><strong>Date:</strong> {{ recording.date }}</p>
-            <p><strong>Location:</strong> {{ recording.location }}</p>
-            <p><strong>Confidence:</strong> {{ recording.confidence_score }}</p>
-        </div>
-    {% else %}
-        <p>Recording not found.</p>
+{% extends 'base.html' %}
+{% block title %}{{ object.species.common_name }} — NT Wildlife Recording System{% endblock %}
+{% block content %}
+<h1>{{ object.species.common_name }}</h1>
+<div class="card">
+    <p><strong>Scientific name:</strong> {{ object.species.scientific_name }}</p>
+    <p><strong>Location:</strong> {{ object.location_name|default:"Not specified" }}</p>
+    <p><strong>Coordinates:</strong> {{ object.latitude }}, {{ object.longitude }}</p>
+    <p><strong>Recorded at:</strong> {{ object.recorded_at|date:"d M Y H:i" }}</p>
+    <p><strong>Recorded by:</strong> {{ object.recorded_by|default:"Anonymous" }}</p>
+    <p><strong>Record type:</strong> {{ object.record_type|default:"Unknown" }}</p>
+    <p><strong>Confidence score:</strong> {{ object.confidence_score }}</p>
+    <p><strong>Anomaly:</strong>
+    {% if can_flag %}
+        <a href="{% url 'anomaly_create' object.pk %}" class="button-sm">Flag as Anomaly</a>
+    {% elif has_resolved_flag %}
+        <span class="badge badge-green">Resolved</span>
+    {% elif object.is_anomaly %}
+        <span class="badge badge-red">Found</span>
     {% endif %}
+    </p>
+    {% if object.audio_file %}
+        <p><strong>Audio:</strong> <audio controls src="{{ object.audio_file.url }}"></audio></p>
+    {% else %}
+        <p><strong>Audio:</strong> No file uploaded</p>
+    {% endif %}
+    {% if object.notes %}
+        <p><strong>Notes:</strong> {{ object.notes }}</p>
+    {% endif %}
+    <div class="actions">
+        <a href="{% url 'recording_update' object.pk %}" class="button-sm button-secondary">Edit</a>
+        <a href="{% url 'recording_delete' object.pk %}" class="button-sm button-danger">Delete</a>
+        <a href="{% url 'anomaly_create' object.pk %}" class="button-sm">Flag as Anomaly</a>
+    </div>
+</div>
 
-    <a href="{% url 'recording_list' %}">Back to Recording List</a>
+{% if object.flags.all %}
+<h2>Anomaly Flags</h2>
+{% for flag in object.flags.all %}
+    <div class="card">
+        <p><strong>Reason:</strong> {{ flag.reason }}</p>
+        <p><strong>Flagged by:</strong> {{ flag.flagged_by|default:"Unknown" }}</p>
+        <p><strong>Resolved:</strong> {% if flag.resolved %}Yes{% else %}No{% endif %}</p>
+        <div class="actions">
+            <a href="{% url 'anomaly_update' flag.pk %}" class="button-sm button-secondary">Edit</a>
+            <a href="{% url 'anomaly_delete' flag.pk %}" class="button-sm button-danger">Delete</a>
+        </div>
+    </div>
+{% endfor %}
+{% endif %}
 
-    <hr>
-    <p>NT Wildlife Recording System</p>
-
-</body>
-</html>
+<a href="{% url 'recording_list' %}" class="button-sm button-secondary">← Back to Recordings</a>
+{% endblock %}
