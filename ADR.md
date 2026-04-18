@@ -257,7 +257,7 @@ Using CBVs makes the project more maintainable and consistent across species, re
 **Status:** Accepted
 
 ### Context
-Django templates can be organized at project level or app level. The system required a clear and scalable structure to manage templates for species, recordings, and anomaly features.
+Django templates can be organized at project level or app level. The system required a clear and scalable structure to manage multiple templates for species, recordings, and anomaly features.
 
 ### Alternatives Considered
 
