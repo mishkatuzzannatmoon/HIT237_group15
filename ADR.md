@@ -3,7 +3,7 @@
 
 **Project:** NT Wildlife Recording System  
 **Repository:** https://github.com/mishkatuzzannatmoon/HIT237_group15  
-**Author (ADR):** Md Rakibul Hassan Emon (s375332)
+**Author (ADR):** Md Rakibul Hassan Emon (S375332)
 
 **Last Updated:** 15 April 2026
 
