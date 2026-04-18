@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Delete Species — NT Wildlife Recording System{% endblock %}
+{% block content %}
+<h1>Delete Species</h1>
+<div class="card">
+    <p>Are you sure you want to delete <strong>{{ object.common_name }}</strong> (<em>{{ object.scientific_name }}</em>)?</p>
+    <p style="color: #c0392b; margin-top: 8px;">This will also delete all recordings linked to this species. This action cannot be undone.</p>
+    <form method="post" style="margin-top: 16px;">
+        {% csrf_token %}
+        <button type="submit" class="button-sm button-danger">Yes, delete</button>
+        <a href="{% url 'species_list' %}" class="button-sm button-secondary" style="margin-left:8px;">Cancel</a>
+    </form>
+</div>
+{% endblock %}

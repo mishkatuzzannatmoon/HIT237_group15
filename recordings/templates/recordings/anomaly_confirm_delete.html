@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Delete Flag — NT Wildlife Recording System{% endblock %}
+{% block content %}
+<h1>Delete Anomaly Flag</h1>
+<div class="card">
+    <p>Are you sure you want to delete this flag on <strong>{{ object.recording }}</strong>?</p>
+    <p style="color: #c0392b; margin-top: 8px;">This action cannot be undone.</p>
+    <form method="post" style="margin-top: 16px;">
+        {% csrf_token %}
+        <button type="submit" class="button-sm button-danger">Yes, delete</button>
+        <a href="{% url 'anomaly_list' %}" class="button-sm button-secondary" style="margin-left:8px;">Cancel</a>
+    </form>
+</div>
+{% endblock %}
+

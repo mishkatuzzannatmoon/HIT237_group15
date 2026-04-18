@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}{{ title|default:"Anomalies" }} — NT Wildlife Recording System{% endblock %}
+{% block content %}
+<h1>{{ title|default:"Anomaly Flags" }}</h1>
+{% if anomalies %}
+    <table>
+        <thead>
+            <tr>
+                <th>Recording</th>
+                <th>Reason</th>
+                <th>Flagged by</th>
+                <th>Resolved</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for anomaly in anomalies %}
+            <tr>
+                <td><a href="{% url 'recording_detail' anomaly.recording.pk %}">{{ anomaly.recording }}</a></td>
+                <td>{{ anomaly.reason|truncatechars:60 }}</td>
+                <td>{{ anomaly.flagged_by|default:"Unknown" }}</td>
+                <td>
+                    {% if anomaly.resolved %}
+                        <span class="badge badge-green">Resolved</span>
+                    {% else %}
+                        <span class="badge badge-red">Open</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'anomaly_update' anomaly.pk %}" class="button-sm button-secondary">Edit</a>
+                    <a href="{% url 'anomaly_delete' anomaly.pk %}" class="button-sm button-danger">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p class="empty">No anomaly flags found.</p>
+{% endif %}
+{% endblock %}

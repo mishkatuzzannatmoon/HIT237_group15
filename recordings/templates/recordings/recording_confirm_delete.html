@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Delete Recording — NT Wildlife Recording System{% endblock %}
+{% block content %}
+<h1>Delete Recording</h1>
+<div class="card">
+    <p>Are you sure you want to delete the recording of <strong>{{ object.species.common_name }}</strong> at {{ object.location_name|default:"unknown location" }} on {{ object.recorded_at|date:"d M Y" }}?</p>
+    <p style="color: #c0392b; margin-top: 8px;">This action cannot be undone.</p>
+    <form method="post" style="margin-top: 16px;">
+        {% csrf_token %}
+        <button type="submit" class="button-sm button-danger">Yes, delete</button>
+        <a href="{% url 'recording_list' %}" class="button-sm button-secondary" style="margin-left:8px;">Cancel</a>
+    </form>
+</div>
+{% endblock %}
