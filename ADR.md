@@ -130,48 +130,37 @@ recordings/models.py – AnomalyFlag.flagged_by (SET_NULL)
 ### Consequences
 This approach protects important ecological data while still allowing sensible cleanup of dependent records. It also preserves useful historical information such as recordings and flags even when user accounts no longer exist.
 
-## ADR-004: Conservation Status as CharField with Choices
+## ADR-004: Conservation Status Using Choices
 
 **Status:** Accepted
 
 ### Context
-We needed to store the conservation status of a species (e.g. "Endangered", "Vulnerable"). We had two main options: store it as a text field with predefined options, or create a separate `ConservationStatus` model/table.
+The system requires predefined conservation categories to ensure consistency when storing species information. These categories follow standard conservation classifications.
 
 ### Alternatives Considered
 
-| Option | Pros | Cons |
-|--------|------|------|
-| Separate `ConservationStatus` model | Easy to add new statuses in the database | Over-engineering; statuses rarely change; adds unnecessary complexity |
-| `CharField` with `choices` | Simple; validated automatically; standard IUCN codes used | Cannot add new statuses without code change |
+| Option                                       | Pros                                                                     | Cons                                                                           |
+| -------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Free-text field for conservation status      | Very flexible; easy to type any value                                    | Inconsistent data entry; spelling variations; difficult to filter and validate |
+| Separate model/table for conservation status | More normalized; easier to expand in a larger system                     | Adds extra complexity for a small project; unnecessary joins                   |
+| Django `TextChoices` in the model            | Built-in validation; consistent values; simple to use in forms and admin | New options require a code change                                              |
 
 ### Decision
-We used a `CharField` with `choices` using standard IUCN conservation codes:
+The conservation status is implemented using Django TextChoices with the following values:
 
-```python
-CONSERVATION_CHOICES = [
-    ('LC', 'Least Concern'),
-    ('NT', 'Near Threatened'),
-    ('VU', 'Vulnerable'),
-    ('EN', 'Endangered'),
-    ('CR', 'Critically Endangered'),
-]
-```
-
-This follows Django's **"Batteries included"** philosophy — Django's built-in `choices` feature handles validation, display names, and admin dropdowns automatically without extra code.
-
-We also added a helper method `is_threatened()` on the `Species` model to check if a species is at risk (VU, EN, or CR).
+Least Concern (LC)
+Near Threatened (NT)
+Vulnerable (VU)
+Endangered (EN)
+Critically Endangered (CR)
+Data Deficient (DD)
+Not Evaluated (NE)
 
 ### Code Reference
-- `CONSERVATION_CHOICES` defined: `recordings/models.py` lines 10–16
-- `conservation_status` field: `recordings/models.py` lines 21–25
-- `is_threatened()` method: `recordings/models.py` lines 34–35
+recordings/models.py – ConservationStatus choices
 
 ### Consequences
-- Admin panel automatically shows a dropdown with correct labels
-- Data is always one of the valid IUCN codes
-- If new conservation levels are needed, a code change and migration is required
-
----
+This ensures consistent data entry, simplifies validation, and supports filtering and display across the application.
 
 ## ADR-005: confidence_score as DecimalField with Validators
 
@@ -248,9 +237,9 @@ Requires extra abstraction
 We use a custom manager for AudioRecording and centralize query logic through manager/query methods. The recordings list view calls AudioRecording.objects.with_details().filter_by_params(self.request) to combine eager loading and request-based filtering in a reusable way.
 
 ### Code Reference
-recordings/models.py – RecordingManager
+recordings/managers.py – RecordingManager
 recordings/views.py – RecordingListView.get_queryset()
-recordings/views.py – use of with_details() and filter_by_params()
+recordings/views.py – with_details() and filter_by_params()
 
 ### Consequences
 This keeps the list view cleaner and makes the filtering logic easier to extend later. It also improves consistency because one query pipeline can be reused instead of rewriting similar logic in multiple places.
@@ -360,7 +349,7 @@ Using CBVs makes the project more maintainable and consistent across species, re
 **Status:** Accepted
 
 ### Context
-Django templates (HTML files) can be stored in different places. We needed to decide where to put our three HTML templates.
+Django templates can be organized at project level or app level. The system required a clear and scalable structure to manage templates for species, recordings, and anomaly features.
 
 ### Alternatives Considered
 
@@ -370,34 +359,27 @@ Django templates (HTML files) can be stored in different places. We needed to de
 | App-level templates with namespace | `recordings/templates/recordings/` | Each app owns its templates; no naming conflicts | Slightly longer path |
 
 ### Decision
-We used app-level templates with a namespace subfolder. Our templates are stored at:
+Templates are stored at the app level inside:
 
-```
-recordings/
-  templates/
-    recordings/
-      recording_list.html
-      recording_detail.html
-      upload_recording.html
-```
+recordings/templates/recordings/
 
-The inner `recordings/` subfolder prevents naming conflicts. For example, if another app also had a `recording_list.html`, Django would know which one to use based on the path `recordings/recording_list.html`.
+The project uses descriptive template names such as:
 
-This follows Django's **"Loose Coupling"** philosophy — the app is self-contained and takes its templates with it.
-
-In `settings.py`, `APP_DIRS: True` (line 52) tells Django to automatically look inside each app's `templates/` folder.
+species_list.html
+species_detail.html
+species_form.html
+recording_list.html
+recording_detail.html
+recording_form.html
+anomaly_list.html
+anomaly_form.html
 
 ### Code Reference
-- Template directory: `recordings/templates/recordings/`
-- `APP_DIRS: True` setting: `wildlife_project/settings.py` line 59
-- Template used in view: `recordings/views.py` line 28 — `'recordings/recording_list.html'`
+recordings/templates/recordings/
+recordings/views.py – template_name usage
 
 ### Consequences
-- Templates are organised by app, not scattered in one big folder
-- No naming conflicts between apps
-- If we add more apps in the future, each can have its own templates folder
-
----
+This structure keeps templates modular and avoids naming conflicts. It also ensures that each app manages its own templates, improving maintainability.
 
 ## ADR-010: SQLite Database for Development
 
@@ -444,7 +426,7 @@ This follows Django's **"Batteries included"** philosophy — it works immediate
 | ADR-001 | Separate `recordings` app | Loose Coupling |
 | ADR-002 | Core models: Species, AudioRecording, AnomalyFlag | DRY, Explicit |
 | ADR-003 | ForeignKey with PROTECT / CASCADE / SET_NULL | Loose Coupling |
-| ADR-004 | Conservation status as CharField with choices | Batteries Included |
+| ADR-004 | Conservation Status Using Choices | Batteries Included |
 | ADR-005 | DecimalField with validators for confidence score | DRY |
 | ADR-006 | Custom manager and query filtering for AudioRecording | Fat Models, Thin Views |
 | ADR-007 | Separate AnomalyFlag model for recording review flags | Encapsulation |
