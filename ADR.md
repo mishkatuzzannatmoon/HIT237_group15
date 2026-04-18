@@ -18,10 +18,11 @@ We needed to organise our Django project into clear, manageable parts. The main 
 
 ### Alternatives Considered
 
-| Option | Pros | Cons |
-|--------|------|------|
-| Put all code in one project folder | Simpler to start | Hard to manage as app grows; not reusable |
-| Create a separate `recordings` app | Clean separation; follows Django best practices | Slightly more setup |
+| Option                              | Pros                                                     | Cons                                            |
+| ----------------------------------- | -------------------------------------------------------- | ----------------------------------------------- |
+| Keep all code in one project folder | Simple to start; fewer files                             | Hard to manage as project grows; poor structure |
+| Separate Django app (`recordings`)  | Clear structure; reusable; follows Django best practices | Slightly more setup required                    |
+
 
 ### Decision
 We created a separate Django app called `recordings`. This app contains all the models, views, URLs, templates, and admin code related to wildlife recordings.
@@ -49,27 +50,11 @@ The project needed a clean and practical data structure to support species infor
 
 ### Alternatives Considered
 
-Option 1: Separate models for Species, Location, Recording, and Anomaly
-Pros:
-
-Strong separation of concepts
-Potential reuse of location records
-
-Cons:
-
-Adds extra joins and complexity
-Unnecessary for the current project scope
-
-Option 2: Core models with location fields inside AudioRecording
-Pros:
-
-Simpler schema
-Easier to work with in forms and views
-Reduces unnecessary relationships
-
-Cons:
-
-Less reusable if the same location must be normalized later
+| Option                                                 | Pros                                      | Cons                                              |
+| ------------------------------------------------------ | ----------------------------------------- | ------------------------------------------------- |
+| Single model with all fields                           | Simple design                             | Data repetition; poor structure; hard to maintain |
+| Few combined models                                    | Less complexity than full separation      | Still mixes responsibilities                      |
+| Separate models (Species, AudioRecording, AnomalyFlag) | Clean structure; no duplication; scalable | Slightly more complex                             |
 
 ### Decision
 We adopted a three-model core structure consisting of Species, AudioRecording, and AnomalyFlag. The AudioRecording model stores the location directly using latitude, longitude, and location_name. Shared controlled values are handled through Django TextChoices using ConservationStatus and RecordType.
@@ -92,26 +77,12 @@ The system uses relationships between species, recordings, users, and anomaly fl
 
 ### Alternatives Considered
 
-Option 1: Use CASCADE everywhere
-Pros:
+| Option   | Behaviour                                  | Used For                          |
+| -------- | ------------------------------------------ | --------------------------------- |
+| CASCADE  | Deletes related records automatically      | When child data depends on parent |
+| SET_NULL | Keeps record but removes reference         | When data can exist independently |
+| PROTECT  | Prevents deletion if related records exist | When data must be preserved       |
 
-Simple default behavior
-Automatically removes dependent records
-
-Cons:
-
-Risk of deleting too much important data
-
-Option 2: Use mixed deletion behavior based on business meaning
-Pros:
-
-Better data protection
-More realistic data retention
-Supports audit and history needs
-
-Cons:
-
-Slightly more design effort
 
 ### Decision
 We adopted a mixed strategy:
@@ -139,11 +110,12 @@ The system requires predefined conservation categories to ensure consistency whe
 
 ### Alternatives Considered
 
-| Option                                       | Pros                                                                     | Cons                                                                           |
-| -------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| Free-text field for conservation status      | Very flexible; easy to type any value                                    | Inconsistent data entry; spelling variations; difficult to filter and validate |
-| Separate model/table for conservation status | More normalized; easier to expand in a larger system                     | Adds extra complexity for a small project; unnecessary joins                   |
-| Django `TextChoices` in the model            | Built-in validation; consistent values; simple to use in forms and admin | New options require a code change                                              |
+| Option                               | Pros                                    | Cons                                |
+| ------------------------------------ | --------------------------------------- | ----------------------------------- |
+| Free-text field                      | Flexible; easy to implement             | Inconsistent data; no validation    |
+| Separate model/table                 | Normalized; scalable                    | Over-engineered for this project    |
+| CharField with choices (TextChoices) | Built-in validation; consistent; simple | Requires code change for new values |
+                                           |
 
 ### Decision
 The conservation status is implemented using Django TextChoices with the following values:
@@ -171,27 +143,12 @@ The project needed a field to store confidence values for audio recordings. This
 
 ### Alternatives Considered
 
-Option 1: FloatField with validators
-Pros:
+| Option                       | Pros                                 | Cons                           |
+| ---------------------------- | ------------------------------------ | ------------------------------ |
+| IntegerField (0–100)         | Easy to understand                   | Less precise; needs conversion |
+| FloatField (0.0–1.0)         | Simple; common approach              | Precision issues possible      |
+| DecimalField with validators | Accurate; controlled range; reliable | Slightly more setup            |
 
-Simple to define
-Common for numeric values
-
-Cons:
-
-Floating-point precision issues
-Less precise for values that should be stored consistently
-
-Option 2: DecimalField with validators
-Pros:
-
-Better precision and consistency
-Clear formatting for values like 0.75 or 1.00
-Well suited to bounded decimal values
-
-Cons:
-
-Slightly more configuration
 
 ### Decision
 We implemented confidence_score as a DecimalField(max_digits=3, decimal_places=2) with MinValueValidator(0.0) and MaxValueValidator(1.0). This ensures valid, consistent confidence values between 0.00 and 1.00.
@@ -211,27 +168,12 @@ The recordings list page needs reusable query logic for loading related data and
 
 ### Alternatives Considered
 
-Option 1: Write all query logic directly inside each view
-Pros:
+| Option                            | Pros                       | Cons                            |
+| --------------------------------- | -------------------------- | ------------------------------- |
+| Filtering logic in views          | Simple initially           | Repeated code; hard to maintain |
+| Separate service layer            | Clean separation           | Adds complexity                 |
+| Custom manager / QuerySet methods | Reusable; clean; efficient | Slight learning curve           |
 
-Quick to start
-Easy for very small projects
-
-Cons:
-
-Repetition
-Harder to maintain and test
-
-Option 2: Centralize query behavior in a custom manager/query layer
-Pros:
-
-Reusable query logic
-Cleaner views
-Better maintainability
-
-Cons:
-
-Requires extra abstraction
 
 ### Decision
 We use a custom manager for AudioRecording and centralize query logic through manager/query methods. The recordings list view calls AudioRecording.objects.with_details().filter_by_params(self.request) to combine eager loading and request-based filtering in a reusable way.
@@ -253,28 +195,11 @@ The system needed a way to record suspicious or unusual audio recordings for lat
 
 ### Alternatives Considered
 
-Option 1: Store anomaly state only as a boolean on AudioRecording
-Pros:
-
-Very simple
-Easy to implement
-
-Cons:
-
-No history
-No explanation of why something was flagged
-Cannot support multiple flags
-
-Option 2: Separate AnomalyFlag model linked to recordings
-Pros:
-
-Keeps audit-style records
-Supports multiple flags
-Stores reason text and resolution state
-
-Cons:
-
-Adds one extra model and relationship
+| Option                           | Pros                                     | Cons                            |
+| -------------------------------- | ---------------------------------------- | ------------------------------- |
+| Boolean flag on model            | Very simple                              | Cannot store details or history |
+| Add fields directly to recording | Keeps data together                      | Model becomes cluttered         |
+| Separate AnomalyFlag model       | Flexible; supports history; clean design | Slightly more complex           |
 
 ### Decision
 We implemented a separate AnomalyFlag model with these main fields:
@@ -302,28 +227,11 @@ The application includes repeated CRUD patterns for species, audio recordings, a
 
 ### Alternatives Considered
 
-Option 1: Function-Based Views (FBV)
-Pros:
+| Option                     | Pros                                 | Cons                                    |
+| -------------------------- | ------------------------------------ | --------------------------------------- |
+| Function-Based Views (FBV) | Simple; easy to learn                | Repeated code; less scalable            |
+| Class-Based Views (CBV)    | Reusable; less code; Django standard | Slightly harder to understand initially |
 
-Easy for beginners to understand
-Flexible for small custom logic
-
-Cons:
-
-Repetitive for CRUD-heavy applications
-Harder to scale cleanly
-
-Option 2: Class-Based Views (CBV)
-Pros:
-
-Reusable structure
-Less repeated code
-Aligns with Django generic views
-Easier to maintain for list/detail/create/update/delete pages
-
-Cons:
-
-Slightly steeper learning curve at first
 
 ### Decision
 We adopted Django Class-Based Views for the core pages in the application. The current code uses:
@@ -353,11 +261,11 @@ Django templates can be organized at project level or app level. The system requ
 
 ### Alternatives Considered
 
-| Option                                                | Pros                                                                         | Cons                                                               |
-| ----------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Project-level templates folder                        | All templates in one place; simple at first                                  | Harder to scale; templates are less tied to the app they belong to |
-| App-level templates without namespace                 | Keeps templates inside the app                                               | Risk of naming conflicts if multiple apps use the same file names  |
-| App-level templates with namespace (`recordings/...`) | Clear ownership; avoids naming conflicts; works well with Django conventions | Slightly longer paths                                              |
+| Option                             | Pros                                    | Cons                       |
+| ---------------------------------- | --------------------------------------- | -------------------------- |
+| Project-level templates folder     | Easy to start; centralized              | Hard to scale; not modular |
+| App-level templates (no namespace) | Organized per app                       | Risk of naming conflicts   |
+| App-level templates with namespace | Clear structure; no conflicts; scalable | Slightly longer paths      |
 
 ### Decision
 Templates are stored at the app level inside:
@@ -391,11 +299,12 @@ We needed to choose a database for development. Options included SQLite, Postgre
 
 ### Alternatives Considered
 
-| Option | Pros | Cons |
-|--------|------|------|
-| SQLite | No setup needed; file-based; perfect for development | Not suitable for large-scale production |
-| PostgreSQL | Production-ready; powerful features | Requires installation and configuration |
-| MySQL | Widely used | Requires installation and configuration |
+| Option     | Pros                                     | Cons                        |
+| ---------- | ---------------------------------------- | --------------------------- |
+| SQLite     | No setup; easy to use; default Django DB | Not suitable for production |
+| PostgreSQL | Powerful; production-ready               | Requires setup              |
+| MySQL      | Widely used                              | Requires configuration      |
+
 
 ### Decision
 We use SQLite for development. Django sets this as the default, and it requires zero configuration — the database is stored as a single file (`db.sqlite3`).
