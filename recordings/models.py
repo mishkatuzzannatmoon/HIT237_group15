@@ -1,142 +1,170 @@
+from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.urls import reverse
 from django.utils import timezone
-from django.db.models import QuerySet
  
-class SpeciesQuerySet(QuerySet):
-    def threatened(self):
-        return self.filter(conservation_status__in=['VU', 'EN', 'CR'])
-
+from .managers import RecordingManager
+ 
+class ConservationStatus(models.TextChoices):
+   
+    LEAST_CONCERN         = 'LC', 'Least Concern'
+    NEAR_THREATENED       = 'NT', 'Near Threatened'
+    VULNERABLE            = 'VU', 'Vulnerable'
+    ENDANGERED            = 'EN', 'Endangered'
+    CRITICALLY_ENDANGERED = 'CR', 'Critically Endangered'
+    DATA_DEFICIENT        = 'DD', 'Data Deficient'
+    NOT_EVALUATED         = 'NE', 'Not Evaluated'
+ 
+ 
 class Species(models.Model):
- 
-    CONSERVATION_CHOICES = [       
-        ('VU', 'Vulnerable'),
-        ('EN', 'Endangered'),
-        ('CR', 'Critically Endangered'),
-        ('EX', 'Extinct'),
-    ]
- 
-    common_name = models.CharField(max_length=100)
-    scientific_name = models.CharField(max_length=100, unique=True)  
+
+    common_name         = models.CharField(max_length=200)
+    scientific_name     = models.CharField(max_length=200, unique=True)
+    conservation_status = models.CharField(
+        max_length=2,
+        choices=ConservationStatus.choices,
+        default=ConservationStatus.NOT_EVALUATED,
+    )
+    is_native  = models.BooleanField(default=False)
+    not_native   = models.BooleanField(default=False)
     description = models.TextField(blank=True)
-    conservation_status = models.CharField(max_length=2, choices=CONSERVATION_CHOICES, default='VU') 
  
     class Meta:
-        ordering = ['common_name']  
+        verbose_name_plural = 'species'
+        ordering = ['scientific_name']
  
     def __str__(self):
         return f"{self.common_name} ({self.scientific_name})"
  
-    def threatened(self):
-        return self.conservation_status in ('VU', 'EN', 'CR')
+    def get_absolute_url(self):
+        return reverse('recordings:species-detail', kwargs={'pk': self.pk})
+ 
+    @property
+    def conversation_status(self):
+        """Convenience property used in templates and admin."""
+        return self.conservation_status in (
+            ConservationStatus.VULNERABLE,
+            ConservationStatus.ENDANGERED,
+            ConservationStatus.CRITICALLY_ENDANGERED,
+            ConservationStatus.DATA_DEFICIENT,
+            ConservationStatus.NOT_EVALUATED,
+            ConservationStatus.NEAR_THREATENED,
+            ConservationStatus.LEAST_CONCERN,
+        )
+ 
+class RecordType(models.TextChoices):
         
-objects = SpeciesQuerySet.as_manager()
- 
+        HUMAN_OBSERVATION    = 'HO', 'Human Observation'
+        MACHINE_OBSERVATION  = 'MO', 'Machine Observation'
+        PRESERVED_SPECIMEN   = 'PS', 'Preserved Specimen'
+        MATERIAL_SAMPLE      = 'MS', 'Material Sample'
+        OTHER                = 'OTHER', 'Other'
 
-class Location(models.Model):
-
-    location_name = models.CharField(max_length=100)
-    latitude = models.DecimalField(max_digits=9, decimal_places=6, default=0.0) 
-    longitude = models.DecimalField(max_digits=9, decimal_places=6, default=0.0)
  
-    def __str__(self):
-        return self.location_name
+class AudioRecording(models.Model):
  
-class RecordingQuerySet(QuerySet):
-    def high_confidence(self):
-        return self.filter(confidence_score__gte=80)
-
-    def medium_confidence(self):
-        return self.filter(confidence_score__gte=50, confidence_score__lt=80)
-
-    def low_confidence(self):
-        return self.filter(confidence_score__lt=50)
+    """
+    An audio observation logged by a researcher or citizen scientist.
  
-class Recording(models.Model):
-
-    RECORD_CHOICES = [              
-        ('human_observation', 'Human Observation'),
-        ('machine_observation', 'Machine Observation'),
-        ('preserved_specimen', 'Preserved Specimen'),
-        ('material_sample', 'Material Sample'),
-    ]
+    Relationships:
+      species      — PROTECT: cannot delete a Species that has recordings
+      recorded_by  — SET_NULL: recordings survive if a user is deleted
+    """
+    species = models.ForeignKey(
+        Species,
+        on_delete=models.PROTECT,     
+        related_name='recordings',
+    )
+    recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='recordings',
+    )
+    recorded_at   = models.DateTimeField()
+    latitude      = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude     = models.DecimalField(max_digits=9, decimal_places=6)
+    location_name = models.CharField(max_length=200, blank=True)
+    record_type   = models.CharField(max_length=20, choices=RecordType.choices, default=RecordType.HUMAN_OBSERVATION)
  
-    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='recordings', null=True, blank=True)
-    species = models.ForeignKey(Species, on_delete=models.CASCADE, related_name='recordings', null=True, blank=True)
-    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='recordings', null=True, blank=True)
-    record_type = models.CharField(max_length=20, choices=RECORD_CHOICES, default='human_observation')
-    date_recorded = models.DateField(default=timezone.now)
-    confidence_score = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)], default = 0, help_text='Confidence score from 0 to 100')
+    audio_file = models.FileField(
+        upload_to='recordings/%Y/%m/',
+        blank=True,
+        null=True,
+    )
+ 
+    confidence_score = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+        help_text="0.00 = no confidence, 1.00 = certain",
+    )
+    notes      = models.TextField(blank=True)
+    is_anomaly = models.BooleanField(default=False, db_index=True)
+ 
+    #Custom manager - managers.py
+    objects = RecordingManager()
  
     class Meta:
-        ordering = ['-date_recorded']  
+        ordering = ['-recorded_at']
+        indexes = [
+            models.Index(fields=['-recorded_at']),
+            models.Index(fields=['species', '-recorded_at']),
+        ]
  
     def __str__(self):
-        return f"{self.species.common_name} — {self.date_recorded}"
+        return (
+            f"{self.species.common_name} at "
+            f"{self.location_name or 'unknown location'} "
+            f"on {self.recorded_at.strftime('%Y-%m-%d')}"
+        )
  
-    def high_confidence(self):
-        return self.confidence_score >= 80
+    def get_absolute_url(self):
+        return reverse('recordings:detail', kwargs={'pk': self.pk})
  
-    def confidence_label(self):
-        if self.confidence_score >= 80:
-            return 'High'
-        elif self.confidence_score >= 50:
-            return 'Medium'
-        else:
-            return 'Low'
+    def flag_as_anomaly(self, reason: str, flagged_by) -> 'AnomalyFlag':
+    
+        self.is_anomaly = True
+        self.save(update_fields=['is_anomaly'])
+        return AnomalyFlag.objects.create(
+            recording=self,
+            reason=reason,
+            flagged_by=flagged_by,
+        )
  
-objects = RecordingQuerySet.as_manager()
+    def resolve_flags(self):
+        """Mark all open flags on this recording as resolved."""
+        self.flags.filter(resolved=False).update(resolved=True)
+        self.is_anomaly = False
+        self.save(update_fields=['is_anomaly'])
 
-class AnomalyQuerySet(QuerySet):
-    def flagged(self):
-        return self.filter(status='open')
-
-    def needs_review(self):
-        return self.filter(status__in=['open', 'under_review'])
-
-    def resolved(self):
-        return self.filter(status='resolved')
-
+    @property
+    def has_been_flagged(self):
+        return self.flags.exists()
  
-class Anomaly(models.Model):
-
-    STATUS_CHOICES = [        
-        ('resolved', 'Resolved'),
-        ('under_review', 'Under Review'),
-        ('open', 'Open'),
-    ]
-
-    ANOMALY_REASONS = [
-        ('misidentification', 'Misidentification'),
-        ('data_error', 'Data Error'),
-        ('unusual_location', 'Unusual Location'),
-        ('other', 'Other'),
-    ]
-
-    recording = models.ForeignKey(Recording, on_delete=models.CASCADE,related_name='anomalies')
-    reason = models.CharField(max_length=20, choices=ANOMALY_REASONS)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
-
+ 
+class AnomalyFlag(models.Model):
+    """
+    An audit record created when a user flags a recording as anomalous.
+    One recording can accumulate multiple flags from different users.
+    """
+    recording = models.ForeignKey(
+        AudioRecording,
+        on_delete=models.CASCADE,
+        related_name='flags',
+    )
+    flagged_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='raised_flags',
+    )
+    reason   = models.TextField()
+    resolved = models.BooleanField(default=False)
+ 
     class Meta:
-        ordering = ['-id']         
+        ordering = ['-id']
  
     def __str__(self):
-        return f"Anomaly [{self.get_status_display()}] on {self.recording}"
- 
-    def is_flagged(self):
-        return self.status == 'open'
- 
-    def needs_review(self):
-        return self.status in ('under_review', 'open')
- 
-    def save(self, *args, **kwargs):
-        score = self.recording.confidence_score  
-        if score < 50:
-            self.status = 'open'
-        elif score < 80:
-            self.status = 'under_review'
-        else:
-            self.status = 'resolved'
-        super().save(*args, **kwargs)
-
-objects = AnomalyQuerySet.as_manager()
+        return f"Flag #{self.pk} on recording #{self.recording_id}"
