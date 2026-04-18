@@ -40,32 +40,39 @@ This follows Django's design philosophy of **"Loose Coupling"** — each part of
 
 ---
 
-## ADR-002: Four-Model Data Structure (Species, Location, Recording, Anomaly)
+## ADR-002:Core Domain Model Structure (Species, AudioRecording, AnomalyFlag)
 
 **Status:** Accepted
 
 ### Context
-We needed to decide how to represent wildlife recording data in the database. The core problem was: what real-world objects does our system need to track?
+The project needed a clean and practical data structure to support species information, audio observation records, and anomaly tracking. The original design idea considered separating location into its own model, but the current implementation stores location directly inside the audio recording record through latitude, longitude, and location name. The system also uses controlled choice values for conservation status and record type.
 
 ### Alternatives Considered
 
-| Option | Pros | Cons |
-|--------|------|------|
-| Single model with all fields | Simple | Too many fields in one place; data repeated many times (e.g. same species name repeated for every recording) |
-| Two models (Recording + Species) | Better than one | Still mixes location data into Recording; anomalies not cleanly tracked |
-| Four models (Species, Location, Recording, Anomaly) | Clean separation; no data repetition; each model has one clear job | More complex to set up |
+Option 1: Separate models for Species, Location, Recording, and Anomaly
+Pros:
+
+Strong separation of concepts
+Potential reuse of location records
+
+Cons:
+
+Adds extra joins and complexity
+Unnecessary for the current project scope
+
+Option 2: Core models with location fields inside AudioRecording
+Pros:
+
+Simpler schema
+Easier to work with in forms and views
+Reduces unnecessary relationships
+
+Cons:
+
+Less reusable if the same location must be normalized later
 
 ### Decision
-We chose four models, each with a clear single responsibility:
-
-- **`Species`** — stores information about animal species (name, conservation status)
-- **`Location`** — stores geographic information (place name, coordinates)
-- **`Recording`** — the main record: links a species to a location with a confidence score and audio file
-- **`Anomaly`** — tracks flagged or suspicious recordings for review
-
-This follows two Django design philosophies:
-1. **"Don't Repeat Yourself (DRY)"** — species name and location name are stored once, not repeated in every recording
-2. **"Explicit is better than implicit"** — each model is clearly named and has a clear purpose
+We adopted a three-model core structure consisting of Species, AudioRecording, and AnomalyFlag. The AudioRecording model stores the location directly using latitude, longitude, and location_name. Shared controlled values are handled through Django TextChoices using ConservationStatus and RecordType.
 
 ### Code Reference
 - All four models defined in `recordings/models.py` lines 1–175
@@ -75,35 +82,45 @@ This follows two Django design philosophies:
 - `Anomaly` model: `models.py` lines 124–180
 
 ### Consequences
-- Data is stored efficiently with no repetition
-- Easy to update a species name in one place and all recordings reflect the change
-- More database joins needed for queries, but Django handles this cleanly
+This structure keeps the system easier to understand and maintain. It supports the project requirements without adding unnecessary complexity. It also aligns well with the current views and forms used throughout the application.
 
----
-
-## ADR-003: ForeignKey Relationships with Different on_delete Behaviours
+## ADR-003: ForeignKey Relationships with PROTECT, CASCADE, and SET_NULL
 
 **Status:** Accepted
 
 ### Context
-When linking models together with ForeignKey, we must decide what happens when the parent record is deleted. For example, if a `Species` is deleted, what should happen to all `Recording` records linked to it?
+The system uses relationships between species, recordings, users, and anomaly flags. We needed to choose appropriate on_delete behaviors so that data remains consistent while still protecting important records from accidental deletion
 
 ### Alternatives Considered
 
-| Option | Behaviour | Used For |
-|--------|-----------|----------|
-| `CASCADE` | Delete child records too | Recording → Species |
-| `SET_NULL` | Set the field to NULL instead of deleting | Recording → Location, Anomaly → reviewed_by |
-| `PROTECT` | Block deletion if children exist | Not used |
+Option 1: Use CASCADE everywhere
+Pros:
+
+Simple default behavior
+Automatically removes dependent records
+
+Cons:
+
+Risk of deleting too much important data
+
+Option 2: Use mixed deletion behavior based on business meaning
+Pros:
+
+Better data protection
+More realistic data retention
+Supports audit and history needs
+
+Cons:
+
+Slightly more design effort
 
 ### Decision
-We used different `on_delete` values depending on the business logic:
+We adopted a mixed strategy:
 
-- **`Recording → Species` uses `CASCADE`**: If a species is deleted from the system, all recordings of that species are also deleted. A recording cannot exist without knowing what species it is.
-- **`Recording → Location` uses `SET_NULL`**: If a location is deleted, the recording is kept but its location becomes unknown (`null`). The recording data is still useful.
-- **`Anomaly → reviewed_by` uses `SET_NULL`**: If the reviewing user account is deleted, the anomaly review record is kept but the reviewer field becomes null.
-
-This follows the Django design philosophy of **"Loose Coupling"** — we do not force unnecessary dependencies between models.
+AudioRecording.species uses PROTECT so a species cannot be deleted while recordings still reference it.
+AudioRecording.recorded_by uses SET_NULL so recordings remain even if a user is removed.
+AnomalyFlag.recording uses CASCADE so flags are removed if the parent recording is deleted.
+AnomalyFlag.flagged_by uses SET_NULL so flag records can remain even if the user account is deleted.
 
 ### Code Reference
 - `Recording → Species` CASCADE: `recordings/models.py` line 61
@@ -114,10 +131,7 @@ This follows the Django design philosophy of **"Loose Coupling"** — we do not 
 - `Anomaly → reviewed_by` SET_NULL: `recordings/models.py` lines 143
 
 ### Consequences
-- Data is not accidentally deleted when linked records are removed
-- Business rules are enforced at the database level, not just in code
-
----
+This approach protects important ecological data while still allowing sensible cleanup of dependent records. It also preserves useful historical information such as recordings and flags even when user accounts no longer exist.
 
 ## ADR-004: Conservation Status as CharField with Choices
 
@@ -162,35 +176,39 @@ We also added a helper method `is_threatened()` on the `Species` model to check 
 
 ---
 
-## ADR-005: confidence_score as FloatField with Validators
+## ADR-005: confidence_score as DecimalField with Validators
 
 **Status:** Accepted
 
 ### Context
-Each recording has a confidence score representing how confident we are in the species identification. We needed to decide how to store and validate this number.
+The project needed a field to store confidence values for audio recordings. This value must stay in the range from 0.00 to 1.00 and should be suitable for display, filtering, and validation in the Django application.
 
 ### Alternatives Considered
 
-| Option | Pros | Cons |
-|--------|------|------|
-| `IntegerField` (0 to 100) | Easy to understand as percentage | Less precise; need conversion |
-| `FloatField` (0.0 to 1.0) | Standard scientific representation; easy maths | Slightly less intuitive for users |
-| `CharField` (e.g. "High", "Low") | Human-readable | Cannot do numerical comparisons |
+Option 1: FloatField with validators
+Pros:
+
+Simple to define
+Common for numeric values
+
+Cons:
+
+Floating-point precision issues
+Less precise for values that should be stored consistently
+
+Option 2: DecimalField with validators
+Pros:
+
+Better precision and consistency
+Clear formatting for values like 0.75 or 1.00
+Well suited to bounded decimal values
+
+Cons:
+
+Slightly more configuration
 
 ### Decision
-We used `FloatField` with Django validators to enforce the range 0.0 to 1.0:
-
-```python
-confidence_score = models.FloatField(
-    validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
-)
-```
-
-We also added helper methods on the `Recording` model:
-- `confidence_percentage()` — returns the score as a readable percentage string (e.g. "87.0%")
-- `is_high_confidence()` — returns `True` if score is 0.8 or above
-
-This follows the Django philosophy of **"Don't Repeat Yourself (DRY)"** — the conversion logic lives in the model, not scattered through views and templates.
+We implemented confidence_score as a DecimalField(max_digits=3, decimal_places=2) with MinValueValidator(0.0) and MaxValueValidator(1.0). This ensures valid, consistent confidence values between 0.00 and 1.00.
 
 ### Code Reference
 - `confidence_score` field: `recordings/models.py` lines 88–91
@@ -198,83 +216,89 @@ This follows the Django philosophy of **"Don't Repeat Yourself (DRY)"** — the 
 - `is_high_confidence()` method: `recordings/models.py` line 104
 
 ### Consequences
-- Invalid values (below 0 or above 1) are rejected automatically
-- Views and templates can simply call `.confidence_percentage()` without doing any maths themselves
+This decision improves precision and validation reliability. It also makes the stored values easier to interpret and display in forms, templates, and filtering logic.
 
----
-
-## ADR-006: Custom QuerySet Methods on the Recording Model
+## ADR-006: Custom Manager and Query Filtering for AudioRecording
 
 **Status:** Accepted
 
 ### Context
-We needed common ways to filter recordings — for example, "get all recordings from the last 30 days" or "get all recordings of threatened species." We had to decide where this filtering logic should live.
+The recordings list page needs reusable query logic for loading related data and applying request-based filtering. Instead of scattering query logic across multiple views, the project needed a more centralized and maintainable approach.
 
 ### Alternatives Considered
 
-| Option | Pros | Cons |
-|--------|------|------|
-| Write filter logic in every view | Simple at first | Repeated code; hard to maintain |
-| Put filter logic in a separate service file | Clean separation | Extra complexity for small project |
-| Add class methods directly on the model | Code lives near the data it describes; reusable | Slightly mixes data and business logic |
+Option 1: Write all query logic directly inside each view
+Pros:
+
+Quick to start
+Easy for very small projects
+
+Cons:
+
+Repetition
+Harder to maintain and test
+
+Option 2: Centralize query behavior in a custom manager/query layer
+Pros:
+
+Reusable query logic
+Cleaner views
+Better maintainability
+
+Cons:
+
+Requires extra abstraction
 
 ### Decision
-We added two `@classmethod` methods on the `Recording` model:
-
-```python
-@classmethod
-def recent(cls, days=30):
-    cutoff = timezone.now() - timedelta(days=days)
-    return cls.objects.filter(recorded_at__gte=cutoff)
-
-@classmethod
-def by_threatened_species(cls):
-    threatened_statuses = ('VU', 'EN', 'CR')
-    return cls.objects.filter(
-        species__conservation_status__in=threatened_statuses
-    ).select_related('species', 'location', 'user')
-```
-
-This uses Django's **QuerySet API** with `filter()`, `select_related()`, and field lookups like `__gte` and `__in`. The `select_related()` call is important — it tells Django to fetch the related `species`, `location`, and `user` in a single database query instead of making separate queries for each recording (this avoids the N+1 query problem).
-
-This also follows the **"Fat models, thin views"** Django design pattern.
+We use a custom manager for AudioRecording and centralize query logic through manager/query methods. The recordings list view calls AudioRecording.objects.with_details().filter_by_params(self.request) to combine eager loading and request-based filtering in a reusable way.
 
 ### Code Reference
 - `recent()` classmethod: `recordings/models.py` lines 111–114
 - `by_threatened_species()` classmethod: `recordings/models.py` lines 116–121
 
 ### Consequences
-- Views can call `Recording.recent()` or `Recording.by_threatened_species()` cleanly
-- Database queries are efficient due to `select_related()`
-- The same filter logic can be reused across multiple views
+This keeps the list view cleaner and makes the filtering logic easier to extend later. It also improves consistency because one query pipeline can be reused instead of rewriting similar logic in multiple places.
 
----
-
-## ADR-007: Anomaly Model for Flagging Suspicious Recordings
+## ADR-007: AnomalyFlag Model for Recording Review Flags
 
 **Status:** Accepted
 
 ### Context
-The system needs a way for users to flag recordings that look wrong or suspicious (for example, a species recorded in an unusual location). We needed to decide how to store this information.
+The system needed a way to record suspicious or unusual audio recordings for later review. This required a lightweight but traceable model that links a flag to a recording and optionally to the user who raised it.
 
 ### Alternatives Considered
 
-| Option | Pros | Cons |
-|--------|------|------|
-| Add a boolean `is_flagged` field on Recording | Very simple | Cannot store reason, who flagged it, or review history |
-| Add flagging fields directly on Recording | Keeps data together | Recording model becomes too large; only one flag per recording |
-| Separate `Anomaly` model linked to Recording | Clean; multiple flags per recording; full history | Slightly more complex |
+Option 1: Store anomaly state only as a boolean on AudioRecording
+Pros:
+
+Very simple
+Easy to implement
+
+Cons:
+
+No history
+No explanation of why something was flagged
+Cannot support multiple flags
+
+Option 2: Separate AnomalyFlag model linked to recordings
+Pros:
+
+Keeps audit-style records
+Supports multiple flags
+Stores reason text and resolution state
+
+Cons:
+
+Adds one extra model and relationship
 
 ### Decision
-We created a separate `Anomaly` model with a `ForeignKey` to `Recording`. Each anomaly tracks:
-- Who flagged it (`flagged_by`)
-- Why it was flagged (`reason`)
-- Its current status (Open → Under Review → Resolved/Dismissed)
-- Who reviewed it and when
+We implemented a separate AnomalyFlag model with these main fields:
 
-We also added two business logic methods: `resolve(reviewer)` and `dismiss(reviewer)` which update the status and record the reviewer in one operation.
-
-This follows Django's **"Encapsulation"** principle — the logic for resolving an anomaly lives inside the `Anomaly` model, not scattered in views.
+recording
+flagged_by
+reason
+resolved
+The AudioRecording model also includes is_anomaly and helper methods such as flag_as_anomaly() and resolve_flags() to coordinate anomaly state with related flag records.
 
 ### Code Reference
 - `Anomaly` model: `recordings/models.py` lines 124–181
@@ -284,35 +308,48 @@ This follows Django's **"Encapsulation"** principle — the logic for resolving 
 - `has_anomalies()` method on Recording: `recordings/models.py` line 107
 
 ### Consequences
-- Multiple flags can exist for one recording
-- Full audit trail of who flagged and who reviewed
-- Status workflow is clear and enforced in the model
+This gives the project a clearer review workflow than a simple boolean alone. It also supports traceability because flags can store reasons and remain linked to the affected recording.
 
----
+## ADR-008: Class-Based Views for CRUD Operations
 
-## ADR-008: Function-Based Views (with Plan to Move to Class-Based Views)
-
-**Status:** Accepted (Partially – CBV migration planned)
+**Status:** Accepted 
 
 ### Context
-Django offers two ways to write views: Function-Based Views (FBV) and Class-Based Views (CBV). We needed to decide which to use for our three main pages: recording list, recording detail, and upload form.
+The application includes repeated CRUD patterns for species, audio recordings, and anomaly flags. We needed an approach that reduces duplicated code and fits well with Django’s built-in architecture. Earlier development may have started with simpler approaches, but the final implementation needed to reflect the current structure of the project.
 
 ### Alternatives Considered
 
-| Option | Pros | Cons |
-|--------|------|------|
-| Function-Based Views (FBV) | Simple and easy to understand; good for beginners | More repeated code for common patterns |
-| Class-Based Views (CBV) | Reuses built-in Django classes (ListView, DetailView); less code | Harder to understand at first |
+Option 1: Function-Based Views (FBV)
+Pros:
+
+Easy for beginners to understand
+Flexible for small custom logic
+
+Cons:
+
+Repetitive for CRUD-heavy applications
+Harder to scale cleanly
+
+Option 2: Class-Based Views (CBV)
+Pros:
+
+Reusable structure
+Less repeated code
+Aligns with Django generic views
+Easier to maintain for list/detail/create/update/delete pages
+
+Cons:
+
+Slightly steeper learning curve at first
 
 ### Decision
-We started with Function-Based Views because they are easier to understand and quicker to prototype. Our three current views are:
-- `recording_list(request)` — shows all recordings
-- `recording_detail(request, id)` — shows one recording
-- `upload_recording(request)` — shows upload form
+We adopted Django Class-Based Views for the core pages in the application. The current code uses:
 
-**Current limitation:** The views currently use hardcoded sample data instead of querying the database. This is a temporary state during development. The next step is to connect views to the `Recording` model using Django's QuerySet API.
+SpeciesListView, SpeciesDetailView, SpeciesCreateView, SpeciesUpdateView, and SpeciesDeleteView
+RecordingListView, RecordingDetailView, RecordingCreateView, RecordingUpdateView, and RecordingDeleteView
+AnomalyListView, AnomalyCreateView, AnomalyUpdateView, and AnomalyDeleteView
 
-**Future plan:** Migrate to Class-Based Views using Django's built-in `ListView` and `DetailView`, which will reduce repeated code and follow Django best practices more closely.
+The recordings list view uses a queryset pipeline based on with_details() and filter_by_params(self.request), while the recording detail view uses select_related() and prefetch_related() for related data loading.
 
 ### Code Reference
 - All three views: `recordings/views.py` lines 24–39
@@ -320,11 +357,7 @@ We started with Function-Based Views because they are easier to understand and q
 - Hardcoded sample data: `recordings/views.py` lines 3–25
 
 ### Consequences
-- Views are currently easy to read and understand
-- Hardcoded data must be replaced with real database queries before production use
-- Migrating to CBV later will reduce code but requires refactoring
-
----
+Using CBVs makes the project more maintainable and consistent across species, recordings, and anomaly workflows. It also fits the final structure of the application much better than an older FBV-based description would.
 
 ## ADR-009: App-Level Template Directory Structure
 
