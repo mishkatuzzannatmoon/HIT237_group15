@@ -29,7 +29,7 @@ We created a separate Django app called `recordings`. This app contains all the 
 This follows Django's design philosophy of **"Loose Coupling"** — each part of the system should work independently and not depend heavily on other parts.
 
 ### Code Reference
-- App registered in `wildlife_project/settings.py` line 40: `'recordings'`
+- App registered in `wildlife_project/settings.py` – INSTALLED_APPS: `'recordings'`
 - App directory: `recordings/` (contains `models.py`, `views.py`, `urls.py`, `admin.py`, `templates/`)
 - Main project includes app URLs in `wildlife_project/urls.py` line 20: `path('', include('recordings.urls'))`
 
@@ -353,10 +353,11 @@ Django templates can be organized at project level or app level. The system requ
 
 ### Alternatives Considered
 
-| Option | Example Path | Pros | Cons |
-|--------|-------------|------|------|
-| Project-level templates folder | `wildlife_project/templates/` | One place for all templates | Templates not tied to the app; harder to reuse app |
-| App-level templates with namespace | `recordings/templates/recordings/` | Each app owns its templates; no naming conflicts | Slightly longer path |
+| Option                                                | Pros                                                                         | Cons                                                               |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Project-level templates folder                        | All templates in one place; simple at first                                  | Harder to scale; templates are less tied to the app they belong to |
+| App-level templates without namespace                 | Keeps templates inside the app                                               | Risk of naming conflicts if multiple apps use the same file names  |
+| App-level templates with namespace (`recordings/...`) | Clear ownership; avoids naming conflicts; works well with Django conventions | Slightly longer paths                                              |
 
 ### Decision
 Templates are stored at the app level inside:
@@ -402,7 +403,7 @@ We use SQLite for development. Django sets this as the default, and it requires 
 This follows Django's **"Batteries included"** philosophy — it works immediately without any extra setup.
 
 ### Code Reference
-- Database configuration: `wildlife_project/settings.py` lines 76–81
+- Database configuration: `wildlife_project/settings.py` – INSTALLED_APPS
   ```python
   DATABASES = {
       'default': {
