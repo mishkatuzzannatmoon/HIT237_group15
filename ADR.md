@@ -40,7 +40,7 @@ This follows Django's design philosophy of **"Loose Coupling"** — each part of
 
 ---
 
-## ADR-002:Core Domain Model Structure (Species, AudioRecording, AnomalyFlag)
+## ADR-002: Core Domain Model Structure (Species, AudioRecording, AnomalyFlag)
 
 **Status:** Accepted
 
@@ -75,11 +75,10 @@ Less reusable if the same location must be normalized later
 We adopted a three-model core structure consisting of Species, AudioRecording, and AnomalyFlag. The AudioRecording model stores the location directly using latitude, longitude, and location_name. Shared controlled values are handled through Django TextChoices using ConservationStatus and RecordType.
 
 ### Code Reference
-- All four models defined in `recordings/models.py` lines 1–175
-- `Species` model: `models.py` lines 8–36
-- `Location` model: `models.py` lines 38–58
-- `Recording` model: `models.py` lines 61–123
-- `Anomaly` model: `models.py` lines 124–180
+recordings/models.py – Species model
+recordings/models.py – AudioRecording model
+recordings/models.py – AnomalyFlag model
+recordings/models.py – ConservationStatus and RecordType choices
 
 ### Consequences
 This structure keeps the system easier to understand and maintain. It supports the project requirements without adding unnecessary complexity. It also aligns well with the current views and forms used throughout the application.
@@ -123,12 +122,10 @@ AnomalyFlag.recording uses CASCADE so flags are removed if the parent recording 
 AnomalyFlag.flagged_by uses SET_NULL so flag records can remain even if the user account is deleted.
 
 ### Code Reference
-- `Recording → Species` CASCADE: `recordings/models.py` line 61
-- `Recording → Location` SET_NULL: `recordings/models.py` line 75
-- `Recording → User` CASCADE: `recordings/models.py` line 63
-- `Anomaly → recording` CASCADE: `recordings/models.py` line 133
-- `Anomaly → flagged_by` CASCADE: `recordings/models.py` line 138
-- `Anomaly → reviewed_by` SET_NULL: `recordings/models.py` lines 143
+recordings/models.py – AudioRecording.species (PROTECT)
+recordings/models.py – AudioRecording.recorded_by (SET_NULL)
+recordings/models.py – AnomalyFlag.recording (CASCADE)
+recordings/models.py – AnomalyFlag.flagged_by (SET_NULL)
 
 ### Consequences
 This approach protects important ecological data while still allowing sensible cleanup of dependent records. It also preserves useful historical information such as recordings and flags even when user accounts no longer exist.
@@ -211,9 +208,7 @@ Slightly more configuration
 We implemented confidence_score as a DecimalField(max_digits=3, decimal_places=2) with MinValueValidator(0.0) and MaxValueValidator(1.0). This ensures valid, consistent confidence values between 0.00 and 1.00.
 
 ### Code Reference
-- `confidence_score` field: `recordings/models.py` lines 88–91
-- `confidence_percentage()` method: `recordings/models.py` line 101
-- `is_high_confidence()` method: `recordings/models.py` line 104
+recordings/models.py – AudioRecording.confidence_score (DecimalField with validators)
 
 ### Consequences
 This decision improves precision and validation reliability. It also makes the stored values easier to interpret and display in forms, templates, and filtering logic.
@@ -253,8 +248,9 @@ Requires extra abstraction
 We use a custom manager for AudioRecording and centralize query logic through manager/query methods. The recordings list view calls AudioRecording.objects.with_details().filter_by_params(self.request) to combine eager loading and request-based filtering in a reusable way.
 
 ### Code Reference
-- `recent()` classmethod: `recordings/models.py` lines 111–114
-- `by_threatened_species()` classmethod: `recordings/models.py` lines 116–121
+recordings/models.py – RecordingManager
+recordings/views.py – RecordingListView.get_queryset()
+recordings/views.py – use of with_details() and filter_by_params()
 
 ### Consequences
 This keeps the list view cleaner and makes the filtering logic easier to extend later. It also improves consistency because one query pipeline can be reused instead of rewriting similar logic in multiple places.
@@ -301,11 +297,9 @@ resolved
 The AudioRecording model also includes is_anomaly and helper methods such as flag_as_anomaly() and resolve_flags() to coordinate anomaly state with related flag records.
 
 ### Code Reference
-- `Anomaly` model: `recordings/models.py` lines 124–181
-- `STATUS_CHOICES`: `recordings/models.py` lines 126–131
-- `resolve()` method: `recordings/models.py` lines 170–175
-- `dismiss()` method: `recordings/models.py` lines 176–180
-- `has_anomalies()` method on Recording: `recordings/models.py` line 107
+recordings/models.py – AnomalyFlag model
+recordings/models.py – AudioRecording.is_anomaly field
+recordings/models.py – flag_as_anomaly() and resolve_flags() methods
 
 ### Consequences
 This gives the project a clearer review workflow than a simple boolean alone. It also supports traceability because flags can store reasons and remain linked to the affected recording.
@@ -352,9 +346,11 @@ AnomalyListView, AnomalyCreateView, AnomalyUpdateView, and AnomalyDeleteView
 The recordings list view uses a queryset pipeline based on with_details() and filter_by_params(self.request), while the recording detail view uses select_related() and prefetch_related() for related data loading.
 
 ### Code Reference
-- All three views: `recordings/views.py` lines 24–39
-- URL patterns linking to these views: `recordings/urls.py` lines 4–8
-- Hardcoded sample data: `recordings/views.py` lines 3–25
+recordings/views.py – SpeciesListView, SpeciesDetailView
+recordings/views.py – RecordingListView, RecordingDetailView
+recordings/views.py – RecordingCreateView, RecordingUpdateView, RecordingDeleteView
+recordings/views.py – AnomalyListView and related views
+recordings/urls.py – URL mappings for species, recordings, anomalies
 
 ### Consequences
 Using CBVs makes the project more maintainable and consistent across species, recordings, and anomaly workflows. It also fits the final structure of the application much better than an older FBV-based description would.
@@ -446,12 +442,14 @@ This follows Django's **"Batteries included"** philosophy — it works immediate
 | ADR | Decision | Django Philosophy |
 |-----|----------|-------------------|
 | ADR-001 | Separate `recordings` app | Loose Coupling |
-| ADR-002 | Four models: Species, Location, Recording, Anomaly | DRY, Explicit |
-| ADR-003 | ForeignKey with CASCADE / SET_NULL | Loose Coupling |
+| ADR-002 | Core models: Species, AudioRecording, AnomalyFlag | DRY, Explicit |
+| ADR-003 | ForeignKey with PROTECT / CASCADE / SET_NULL | Loose Coupling |
 | ADR-004 | Conservation status as CharField with choices | Batteries Included |
-| ADR-005 | FloatField with validators for confidence score | DRY |
-| ADR-006 | QuerySet class methods on Recording model | Fat Models, Thin Views |
-| ADR-007 | Separate Anomaly model for flagging | Encapsulation |
-| ADR-008 | Function-Based Views (CBV migration planned) | Explicit is Better |
+| ADR-005 | DecimalField with validators for confidence score | DRY |
+| ADR-006 | Custom manager and query filtering for AudioRecording | Fat Models, Thin Views |
+| ADR-007 | Separate AnomalyFlag model for recording review flags | Encapsulation |
+| ADR-008 | Class-Based Views for CRUD operations | Explicit is Better |
 | ADR-009 | App-level namespaced template directories | Loose Coupling |
 | ADR-010 | SQLite for development | Batteries Included |
+
+Note: Code references are provided at file and class level to ensure consistency with evolving implementation.
