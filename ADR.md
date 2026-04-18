@@ -29,7 +29,7 @@ We created a separate Django app called `recordings`. This app contains all the 
 
 This follows Django's design philosophy of **"Loose Coupling"** — each part of the system should work independently and not depend heavily on other parts.
 
-### Code Reference
+### Code References
 - wildlife_project/settings.py – INSTALLED_APPS includes 'recordings'
 - recordings/ – contains models.py, views.py, urls.py, admin.py, and templates/
 - wildlife_project/urls.py – include('recordings.urls')
@@ -59,7 +59,7 @@ The project needed a clean and practical data structure to support species infor
 ### Decision
 We adopted a three-model core structure consisting of Species, AudioRecording, and AnomalyFlag. The AudioRecording model stores the location directly using latitude, longitude, and location_name. Shared controlled values are handled through Django TextChoices using ConservationStatus and RecordType.
 
-### Code Reference
+### Code References
 - recordings/models.py – Species model
 - recordings/models.py – AudioRecording model
 - recordings/models.py – AnomalyFlag model
@@ -91,7 +91,7 @@ AudioRecording.recorded_by uses SET_NULL so recordings remain even if a user is 
 AnomalyFlag.recording uses CASCADE so flags are removed if the parent recording is deleted.
 AnomalyFlag.flagged_by uses SET_NULL so flag records can remain even if the user account is deleted.
 
-### Code Reference
+### Code References
 - recordings/models.py – AudioRecording.species (PROTECT)
 - recordings/models.py – AudioRecording.recorded_by (SET_NULL)
 - recordings/models.py – AnomalyFlag.recording (CASCADE)
@@ -126,7 +126,7 @@ The conservation status is implemented using Django TextChoices with the followi
 - Data Deficient (DD)
 - Not Evaluated (NE)
 
-### Code Reference
+### Code References
 - recordings/models.py – ConservationStatus choices
 
 ### Consequences
@@ -151,7 +151,7 @@ The project needed a field to store confidence values for audio recordings. This
 ### Decision
 We implemented confidence_score as a DecimalField(max_digits=3, decimal_places=2) with MinValueValidator(0.0) and MaxValueValidator(1.0). This ensures valid, consistent confidence values between 0.00 and 1.00.
 
-### Code Reference
+### Code References
 - recordings/models.py – AudioRecording.confidence_score (DecimalField with validators)
 
 ### Consequences
@@ -176,7 +176,7 @@ The recordings list page needs reusable query logic for loading related data and
 ### Decision
 We use a custom manager for AudioRecording and centralize query logic through manager/query methods. The recordings list view calls AudioRecording.objects.with_details().filter_by_params(self.request) to combine eager loading and request-based filtering in a reusable way.
 
-### Code Reference
+### Code References
 - recordings/managers.py – RecordingManager
 - recordings/views.py – RecordingListView.get_queryset()
 - recordings/views.py – with_details() and filter_by_params()
@@ -209,7 +209,7 @@ We implemented a separate AnomalyFlag model with these main fields:
 
 The AudioRecording model also includes `is_anomaly` and helper methods such as `flag_as_anomaly()` and `resolve_flags()` to coordinate anomaly state with related flag records.
 
-### Code Reference
+### Code References
 - recordings/models.py – AnomalyFlag model
 - recordings/models.py – AudioRecording.is_anomaly field
 - recordings/models.py – flag_as_anomaly() and resolve_flags() methods
@@ -241,7 +241,7 @@ We adopted Django Class-Based Views for the core pages in the application. The c
 
 The recordings list view uses a queryset pipeline based on with_details() and filter_by_params(self.request), while the recording detail view uses select_related() and prefetch_related() for related data loading.
 
-### Code Reference
+### Code References
 - recordings/views.py – SpeciesListView and SpeciesDetailView
 - recordings/views.py – RecordingListView and RecordingDetailView
 - recordings/views.py – RecordingCreateView, RecordingUpdateView, and RecordingDeleteView
@@ -282,7 +282,7 @@ The project uses descriptive template names such as:
 - anomaly_list.html
 - anomaly_form.html
 
-### Code Reference
+### Code References
 - recordings/templates/recordings/
 - recordings/views.py – template_name usage
 
@@ -310,7 +310,7 @@ We use SQLite for development. Django sets this as the default, and it requires 
 
 This follows Django's **"Batteries included"** philosophy — it works immediately without any extra setup.
 
-### Code Reference
+### Code References
 - wildlife_project/settings.py – DATABASES configuration
 - ```python
 DATABASES = {
