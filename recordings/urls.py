@@ -1,27 +1,24 @@
 from django.urls import path
-from .views import RecordingListView, RecordingDetailView, UploadRecordingView
 from . import views
 
-
 urlpatterns = [
-    path("", RecordingListView.as_view(), name="recording_list"),
-    path("upload/", UploadRecordingView.as_view(), name="upload_recording"),
-    path("<int:id>/", RecordingDetailView.as_view(), name="recording_detail"),
-    
+    # Species
     path('species/', views.SpeciesListView.as_view(), name='species_list'),
-    path('species/threatened/', views.ThreatenedSpeciesListView.as_view(), name='threatened_species'),
     path('species/add/', views.SpeciesCreateView.as_view(), name='species_create'),
+    path('species/<int:pk>/', views.SpeciesDetailView.as_view(), name='species_detail'),
     path('species/<int:pk>/edit/', views.SpeciesUpdateView.as_view(), name='species_update'),
     path('species/<int:pk>/delete/', views.SpeciesDeleteView.as_view(), name='species_delete'),
 
-    path('recordings/', views.RecordingListView.as_view(), name='recording_list'),
-    path('recordings/high-confidence/', views.HighConfidenceRecordingListView.as_view(), name='high_confidence_recordings'),
+    # Recordings
+    path('', views.RecordingListView.as_view(), name='recording_list'),
     path('recordings/add/', views.RecordingCreateView.as_view(), name='recording_create'),
+    path('recordings/<int:pk>/', views.RecordingDetailView.as_view(), name='recording_detail'),
+    path('recordings/<int:pk>/edit/', views.RecordingUpdateView.as_view(), name='recording_update'),
+    path('recordings/<int:pk>/delete/', views.RecordingDeleteView.as_view(), name='recording_delete'),
 
+    # Anomalies
     path('anomalies/', views.AnomalyListView.as_view(), name='anomaly_list'),
-    path('anomalies/flagged/', views.FlaggedAnomalyListView.as_view(), name='flagged_anomalies'),
-    path('anomalies/review/', views.NeedsReviewAnomalyListView.as_view(), name='anomalies_needing_review'),
-    path('anomalies/add/', views.AnomalyCreateView.as_view(), name='anomaly_create'),
+    path('anomalies/add/<int:recording_pk>/', views.AnomalyCreateView.as_view(), name='anomaly_create'),
     path('anomalies/<int:pk>/edit/', views.AnomalyUpdateView.as_view(), name='anomaly_update'),
     path('anomalies/<int:pk>/delete/', views.AnomalyDeleteView.as_view(), name='anomaly_delete'),
 ]
