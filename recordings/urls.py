@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from django.contrib.auth.views import LoginView, LogoutView
 
 urlpatterns = [
     # Species
@@ -21,4 +22,8 @@ urlpatterns = [
     path('anomalies/add/<int:recording_pk>/', views.AnomalyCreateView.as_view(), name='anomaly_create'),
     path('anomalies/<int:pk>/edit/', views.AnomalyUpdateView.as_view(), name='anomaly_update'),
     path('anomalies/<int:pk>/delete/', views.AnomalyDeleteView.as_view(), name='anomaly_delete'),
+
+    # Registration
+    path('login/', LoginView.as_view(template_name='accounts/login.html'), name='login'),
+    path('logout/', LogoutView.as_view(), name='logout'),
 ]
