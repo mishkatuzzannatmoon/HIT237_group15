@@ -2,7 +2,8 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.urls import reverse_lazy
 from .models import Species, AudioRecording, AnomalyFlag, ConservationStatus, RecordType
 from .forms import SpeciesForm, AudioRecordingForm, AnomalyFlagForm
- 
+from django.shortcuts import redirect
+
 class SpeciesListView(ListView):
     model               = Species
     template_name       = 'recordings/species_list.html'
@@ -94,21 +95,24 @@ class AnomalyListView(ListView):
         return AnomalyFlag.objects.select_related('recording__species', 'flagged_by')
  
 class AnomalyCreateView(CreateView):
-    model         = AnomalyFlag
-    form_class    = AnomalyFlagForm
+    model = AnomalyFlag
+    form_class = AnomalyFlagForm
     template_name = 'recordings/anomaly_form.html'
-    success_url   = reverse_lazy('anomaly_list')
- 
+    success_url = reverse_lazy('anomaly_list')
+
     def form_valid(self, form):
-        form.instance.recording_id = self.kwargs['recording_pk']
-        if self.request.user.is_authenticated:
-            form.instance.flagged_by = self.request.user
         recording = AudioRecording.objects.get(pk=self.kwargs['recording_pk'])
+
+        flagged_by = None
+        if self.request.user.is_authenticated:
+            flagged_by = self.request.user
+
         recording.flag_as_anomaly(
             reason=form.cleaned_data['reason'],
-            flagged_by=form.instance.flagged_by,
+            flagged_by=flagged_by,
         )
-        return super().form_valid(form)
+
+        return redirect(self.success_url)
  
  
 class AnomalyUpdateView(UpdateView):
@@ -126,6 +130,16 @@ class AnomalyUpdateView(UpdateView):
  
  
 class AnomalyDeleteView(DeleteView):
-    model         = AnomalyFlag
+    model = AnomalyFlag
     template_name = 'recordings/anomaly_confirm_delete.html'
-    success_url   = reverse_lazy('anomaly_list')
+    success_url = reverse_lazy('anomaly_list')
+
+    def form_valid(self, form):
+        recording = self.object.recording
+        response = super().form_valid(form)
+
+        if not recording.flags.exists():
+            recording.is_anomaly = False
+            recording.save(update_fields=['is_anomaly'])
+
+        return response
