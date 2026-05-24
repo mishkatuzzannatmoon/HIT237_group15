@@ -1,21 +1,82 @@
 {% extends 'base.html' %}
 {% block title %}{% if object %}Edit Recording{% else %}Add Recording{% endif %} — NT Wildlife Recording System{% endblock %}
 {% block content %}
-<h1>{% if object %}Edit Recording{% else %}Add Recording{% endif %}</h1>
+<h1>{% if object %}✏️ Edit Recording{% else %}🎵 Add New Recording{% endif %}</h1>
+
 <div class="card">
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" style="max-width: 600px;">
         {% csrf_token %}
-        {% for field in form %}
-            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-            {{ field }}
-            {% if field.errors %}
-                {% for error in field.errors %}
-                    <p style="color: #c0392b; font-size: 13px;">{{ error }}</p>
+        
+        {% if form.non_field_errors %}
+            <div style="background: #fadbd8; color: #78281f; padding: 12px; border-radius: 6px; margin-bottom: 16px; border-left: 4px solid #c0392b;">
+                {% for error in form.non_field_errors %}
+                    <p style="margin: 0;">{{ error }}</p>
                 {% endfor %}
-            {% endif %}
+            </div>
+        {% endif %}
+
+        {% for field in form %}
+            <div style="margin-bottom: 20px;">
+                <label for="{{ field.id_for_label }}" style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    {% if field.name == 'species' %}
+                        🦁
+                    {% elif field.name == 'recorded_at' %}
+                        📅
+                    {% elif field.name == 'latitude' or field.name == 'longitude' %}
+                        📍
+                    {% elif field.name == 'location_name' %}
+                        📍
+                    {% elif field.name == 'record_type' %}
+                        📝
+                    {% elif field.name == 'audio_file' %}
+                        🎧
+                    {% elif field.name == 'confidence_score' %}
+                        📈
+                    {% elif field.name == 'notes' %}
+                        📝
+                    {% endif %}
+                    <span>
+                        <strong>{{ field.label }}</strong>
+                        {% if field.field.required %}<span style="color: #c0392b;">*</span>{% endif %}
+                    </span>
+                </label>
+                
+                {% if field.help_text %}
+                    <p style="font-size: 12px; color: #888; margin: 4px 0 8px 0;">{{ field.help_text|safe }}</p>
+                {% endif %}
+                
+                {{ field }}
+                
+                {% if field.errors %}
+                    <div style="color: #c0392b; font-size: 13px; margin-top: 4px;">
+                        {% for error in field.errors %}
+                            <p style="margin: 2px 0;">✗ {{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
         {% endfor %}
-        <button type="submit">{% if object %}Save Changes{% else %}Add Recording{% endif %}</button>
-        <a href="{% url 'recording_list' %}" class="button-sm button-secondary" style="margin-left:8px;">Cancel</a>
-    </form>
+
+<div style="display: flex; gap: 12px; margin-top: 28px; padding-top: 20px; border-top: 1px solid #ecf0f1;">
+    <button type="submit" class="button">
+        {% if object %}💾 Save Changes{% else %}➕ Add Recording{% endif %}
+    </button>
+
+    <a href="{% url 'recording_list' %}" class="button" style="display: inline-flex; align-items: center; text-decoration: none;">
+        ← Cancel
+    </a>
+</div> 
+
+<!-- Form Help -->
+<div class="card" style="background: #f9fafb; border-left-color: #d3d3d3; margin-top: 20px;">
+    <h3 style="margin-top: 0;">📋 Form Help</h3>
+    <ul style="margin: 12px 0 0 0; padding-left: 20px;">
+        <li><strong>Species:</strong> Select the species you observed</li>
+        <li><strong>Date & Time:</strong> When was the recording made?</li>
+        <li><strong>Coordinates:</strong> Latitude and longitude of the recording location</li>
+        <li><strong>Confidence Score:</strong> Your confidence that this is the correct species (0.00-1.00)</li>
+        <li><strong>Audio File:</strong> Optional: upload an MP3 or WAV file</li>
+        <li><strong>Notes:</strong> Any additional observations or context</li>
+    </ul>
 </div>
 {% endblock %}

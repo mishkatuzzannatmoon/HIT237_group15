@@ -1,118 +1,118 @@
 {% extends 'base.html' %}
 {% block title %}{{ title|default:"Recordings" }} — NT Wildlife Recording System{% endblock %}
 {% block content %}
-<h1>{{ title|default:"Wildlife Recordings" }}</h1>
-<a href="{% url 'recording_create' %}" class="button">+ Add Recording</a>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1>🎵 NT Wildlife Recordings</h1>
+    <a href="{% url 'recording_create' %}" class="button">+ Add New Recording</a>
+</div>
 
 <!-- Filter form -->
-<form method="get" style="background:white; padding:20px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.08); margin-bottom:20px;">
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:12px; align-items:end;">
+<div class="filter-form">
+    <h3 style="margin-bottom: 16px;">Filter Results</h3>
+    <form method="get">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: end;">
+            <div>
+                <label for="species">🦁 Species</label>
+                <select name="species" id="species">
+                    <option value="">All species</option>
+                    {% for s in all_species %}
+                        <option value="{{ s.pk }}" {% if request.GET.species == s.pk|stringformat:"s" %}selected{% endif %}>
+                            {{ s.common_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
 
-        <div>
-            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">Species</label>
-            <select name="species" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; font-size:13px;">
-                <option value="">All species</option>
-                {% for s in all_species %}
-                    <option value="{{ s.pk }}" {% if request.GET.species == s.pk|stringformat:"s" %}selected{% endif %}>
-                        {{ s.common_name }}
-                    </option>
-                {% endfor %}
-            </select>
+            <div>
+                <label for="conservation_status">📊 Conservation Status</label>
+                <select name="conservation_status" id="conservation_status">
+                    <option value="">All statuses</option>
+                    {% for value, label in conservation_choices %}
+                        <option value="{{ value }}" {% if request.GET.conservation_status == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="record_type">📝 Record Type</label>
+                <select name="record_type" id="record_type">
+                    <option value="">All types</option>
+                    {% for value, label in record_type_choices %}
+                        <option value="{{ value }}" {% if request.GET.record_type == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="date_from">📅 From Date</label>
+                <input type="date" name="date_from" id="date_from" value="{{ request.GET.date_from }}">
+            </div>
+
+            <div>
+                <label for="date_to">📅 To Date</label>
+                <input type="date" name="date_to" id="date_to" value="{{ request.GET.date_to }}">
+            </div>
+
+            <div>
+                <label for="confidence">📈 Confidence Level</label>
+                <select name="confidence" id="confidence">
+                    <option value="">Any confidence</option>
+                    <option value="high" {% if request.GET.confidence == 'high' %}selected{% endif %}>High (≥ 0.8)</option>
+                    <option value="medium" {% if request.GET.confidence == 'medium' %}selected{% endif %}>Medium (0.5–0.8)</option>
+                    <option value="low" {% if request.GET.confidence == 'low' %}selected{% endif %}>Low (< 0.5)</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="anomaly">⚠️ Anomaly Status</label>
+                <select name="anomaly" id="anomaly">
+                    <option value="">All recordings</option>
+                    <option value="yes" {% if request.GET.anomaly == 'yes' %}selected{% endif %}>Anomaly present</option>
+                    <option value="no" {% if request.GET.anomaly == 'no' %}selected{% endif %}>No anomaly</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="submit" class="button">🔍 Filter</button>
+                <a href="{% url 'recording_list' %}" class="button button-secondary">✕ Clear</a>
+            </div>
         </div>
-
-        <div>
-            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">Conservation status</label>
-            <select name="conservation_status" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; font-size:13px;">
-                <option value="">All statuses</option>
-                {% for value, label in conservation_choices %}
-                    <option value="{{ value }}" {% if request.GET.conservation_status == value %}selected{% endif %}>
-                        {{ label }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div>
-            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">Record type</label>
-            <select name="record_type" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; font-size:13px;">
-                <option value="">All types</option>
-                {% for value, label in record_type_choices %}
-                    <option value="{{ value }}" {% if request.GET.record_type == value %}selected{% endif %}>
-                        {{ label }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div>
-            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">Date from</label>
-            <input type="date" name="date_from" value="{{ request.GET.date_from }}"
-                   style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; font-size:13px;">
-        </div>
-
-        <div>
-            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">Date to</label>
-            <input type="date" name="date_to" value="{{ request.GET.date_to }}"
-                   style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; font-size:13px;">
-        </div>
-
-        <div>
-            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">Confidence</label>
-            <select name="confidence" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; font-size:13px;">
-                <option value="">Any confidence</option>
-                <option value="high" {% if request.GET.confidence == 'high' %}selected{% endif %}>High (≥ 0.8)</option>
-                <option value="medium" {% if request.GET.confidence == 'medium' %}selected{% endif %}>Medium (0.5–0.8)</option>
-                <option value="low" {% if request.GET.confidence == 'low' %}selected{% endif %}>Low (< 0.5)</option>
-            </select>
-        </div>
-
-        <div>
-            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">Anomaly</label>
-            <select name="anomaly" style="width:100%; padding:7px; border:1px solid #ccc; border-radius:4px; font-size:13px;">
-                <option value="">All recordings</option>
-                <option value="yes" {% if request.GET.anomaly == 'yes' %}selected{% endif %}>Anomaly present</option>
-                <option value="no" {% if request.GET.anomaly == 'no' %}selected{% endif %}>No anomaly</option>
-            </select>
-        </div>
-
-        <div style="display:flex; gap:8px;">
-            <button type="submit" style="padding:7px 16px; background:#2c7a7b; color:white; border:none; border-radius:4px; font-size:13px; cursor:pointer;">
-                Filter
-            </button>
-            <a href="{% url 'recording_list' %}" style="padding:7px 12px; background:#7f8c8d; color:white; text-decoration:none; border-radius:4px; font-size:13px;">
-                Clear
-            </a>
-        </div>
-
-    </div>
-</form>
+    </form>
+</div>
 
 <!-- Results count -->
-<p style="font-size:13px; color:#666; margin-bottom:12px;">
-    Showing {{ recordings|length }} recording{{ recordings|length|pluralize }}
+<div class="results-count">
+    <strong>📊 Results:</strong> Showing {{ recordings|length }} recording{{ recordings|length|pluralize }}
     {% if request.GET.species or request.GET.conservation_status or request.GET.record_type or request.GET.date_from or request.GET.date_to or request.GET.confidence or request.GET.anomaly %}
-        <span style="color:#2c7a7b;">(filtered)</span>
+        <span class="filtered">(filtered)</span>
     {% endif %}
-</p>
+</div>
 
 {% if recordings %}
     <table>
         <thead>
             <tr>
-                <th>Species</th>
-                <th>Conservation status</th>
-                <th>Record type</th>
-                <th>Location</th>
-                <th>Date</th>
-                <th>Confidence</th>
-                <th>Anomaly</th>
-                <th>Actions</th>
+                <th>🦁 Species</th>
+                <th>📊 Status</th>
+                <th>📝 Type</th>
+                <th>📍 Location</th>
+                <th>📅 Date</th>
+                <th>📈 Confidence</th>
+                <th>⚠️ Anomaly</th>
+                <th>⚙️ Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for recording in recordings %}
             <tr>
-                <td>{{ recording.species.common_name }}</td>
+                <td>
+                    <strong>{{ recording.species.common_name }}</strong><br>
+                    <em style="color: #888; font-size: 12px;">{{ recording.species.scientific_name }}</em>
+                </td>
                 <td>
                     {% with status=recording.species.conservation_status %}
                         {% if status == 'CR' %}
@@ -123,36 +123,47 @@
                             <span class="badge badge-yellow">{{ recording.species.get_conservation_status_display }}</span>
                         {% elif status == 'LC' %}
                             <span class="badge badge-green">{{ recording.species.get_conservation_status_display }}</span>
-                        {% elif status == 'DD' %}
-                            <span class="badge badge-gray">{{ recording.species.get_conservation_status_display }}</span>
-                        {% elif status == 'NE' %}
-                            <span class="badge badge-gray">{{ recording.species.get_conservation_status_display }}</span>
                         {% else %}
                             <span class="badge badge-gray">{{ recording.species.get_conservation_status_display }}</span>
                         {% endif %}
                     {% endwith %}
                 </td>
                 <td>{{ recording.get_record_type_display }}</td>
-                <td>{{ recording.location_name|default:"—" }}</td>
-                <td>{{ recording.recorded_at|date:"d M Y" }}</td>
-                <td>{{ recording.confidence_score }}</td>
                 <td>
-                    {% if recording.is_anomaly %}
-                        <span class="badge badge-red">Anomaly</span>
+                    {% if recording.location_name %}
+                        <strong>{{ recording.location_name }}</strong><br>
+                        <span style="color: #888; font-size: 12px;">{{ recording.latitude }}, {{ recording.longitude }}</span>
                     {% else %}
-                        <span class="badge badge-green">Not Found</span>
+                        <span style="color: #aaa;">—</span>
                     {% endif %}
                 </td>
+                <td>{{ recording.recorded_at|date:"d M Y H:i" }}</td>
                 <td>
-                    <a href="{% url 'recording_detail' recording.pk %}" class="button-sm">View</a>
-                    <a href="{% url 'recording_update' recording.pk %}" class="button-sm button-secondary">Edit</a>
-                    <a href="{% url 'recording_delete' recording.pk %}" class="button-sm button-danger">Delete</a>
+                    <strong style="font-size: 16px;">{{ recording.confidence_score }}</strong>
+                    <div style="width: 60px; height: 6px; background: #ecf0f1; border-radius: 3px; margin-top: 4px;">
+                        <div style="width: {{ recording.confidence_score|floatformat:0 }}%; height: 100%; background: {% if recording.confidence_score >= 0.8 %}#1e8449{% elif recording.confidence_score >= 0.5 %}#d35400{% else %}#c0392b{% endif %}; border-radius: 3px;"></div>
+                    </div>
+                </td>
+                <td>
+                    {% if recording.is_anomaly %}
+                        <span class="badge badge-red">Anomaly Flagged</span>
+                    {% else %}
+                        <span class="badge badge-green">Normal</span>
+                    {% endif %}
+                </td>
+                <td style="white-space: nowrap;">
+                    <a href="{% url 'recording_detail' recording.pk %}" class="button-sm">👁️ View</a>
+                    <a href="{% url 'recording_update' recording.pk %}" class="button-sm button-secondary">✏️ Edit</a>
+                    <a href="{% url 'recording_delete' recording.pk %}" class="button-sm button-danger">🗑️ Delete</a>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 {% else %}
-    <p class="empty">No recordings match your filters.</p>
+    <div class="card" style="text-align: center; border-left: none;">
+        <p style="font-size: 16px; color: #888; margin: 0;">📭 No recordings match your filters.</p>
+        <p style="font-size: 13px; color: #aaa; margin: 8px 0 0 0;">Try adjusting your search criteria or <a href="{% url 'recording_create' %}" style="color: #2c9299; text-decoration: none; font-weight: 600;">add a new recording</a></p>
+    </div>
 {% endif %}
 {% endblock %}

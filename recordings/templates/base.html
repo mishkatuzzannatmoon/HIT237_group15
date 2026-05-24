@@ -1,140 +1,345 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}NT Wildlife Recording System{% endblock %}</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        
         body {
-            font-family: "Times New Roman", Times, serif;
-            background-color: #f4f6f8;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background-color: #f5f7fa;
+            color: #2c3e50;
+            line-height: 1.6;
         }
+        
+        /* Navigation */
         nav {
-            background-color: #2c7a7b;
-            padding: 12px 40px;
+            background: linear-gradient(135deg, #1e7a7e 0%, #2c9299 100%);
+            padding: 16px 40px;
             display: flex;
-            gap: 8px;
+            gap: 16px;
             flex-wrap: wrap;
             align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
+        
         nav a {
             color: white;
             text-decoration: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 14px;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
-        nav a:hover { background-color: rgba(255,255,255,0.2); }
+        
+        nav a:hover { 
+            background-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+        
         nav .brand {
-            font-size: 16px;
-            font-weight: bold;
-            margin-right: 16px;
+            font-size: 18px;
+            font-weight: 700;
+            margin-right: auto;
+            letter-spacing: 0.5px;
         }
+        
+        /* Container */
         .container {
-            max-width: 1400px;
-            margin: 40px auto;
-            padding: 0 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
         }
-        h1 { color: #2c3e50; margin-bottom: 20px; }
-        h2 { color: #2c3e50; margin-bottom: 16px; }
+        
+        /* Headings */
+        h1 { 
+            color: #1e3a5f;
+            margin-bottom: 24px;
+            font-size: 32px;
+            font-weight: 700;
+        }
+        
+        h2 { 
+            color: #1e3a5f;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 600;
+            margin-top: 24px;
+        }
+        
+        h3 {
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        /* Buttons */
         .button {
             display: inline-block;
-            padding: 8px 16px;
-            background-color: #2c7a7b;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #1e7a7e 0%, #2c9299 100%);
             color: white;
             text-decoration: none;
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 15px;
+            font-weight: 500;
             margin-bottom: 16px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
         }
-        .button:hover { background-color: #245f60; }
+        
+        .button:hover { 
+            background: linear-gradient(135deg, #1a6a6f 0%, #22798a 100%);
+            box-shadow: 0 4px 12px rgba(30, 122, 126, 0.3);
+            transform: translateY(-2px);
+        }
+        
         .button-sm {
             display: inline-block;
-            padding: 4px 10px;
-            background-color: #2c7a7b;
+            padding: 6px 12px;
+            background-color: #2c9299;
             color: white;
             text-decoration: none;
             border-radius: 4px;
             font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
         }
+        
+        .button-sm:hover {
+            background-color: #1e7a7e;
+            box-shadow: 0 2px 8px rgba(30, 122, 126, 0.2);
+        }
+        
         .button-danger {
+            background-color: #e74c3c;
+        }
+        
+        .button-danger:hover { 
             background-color: #c0392b;
+            box-shadow: 0 2px 8px rgba(231, 76, 60, 0.2);
         }
-        .button-danger:hover { background-color: #a93226; }
+        
         .button-secondary {
-            background-color: #7f8c8d;
+            background: linear-gradient(135deg, #1e7a7e 0%, #2c9299 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 12px rgba(30, 122, 126, 0.15);
         }
+        
+        .button-secondary:hover {
+            background: linear-gradient(135deg, #1a6a6f 0%, #22798a 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(30, 122, 126, 0.25);
+        }
+        
+        /* Cards */
         .card {
             background-color: white;
-            padding: 20px;
-            margin-bottom: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #2c9299;
+            transition: box-shadow 0.3s ease;
         }
-        .card h3 { margin-bottom: 8px; }
-        .card p { margin: 4px 0; font-size: 14px; color: #555; }
-        .card .actions { margin-top: 12px; display: flex; gap: 8px; }
+        
+        .card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card h3 { margin-bottom: 12px; }
+        .card p { margin: 8px 0; font-size: 14px; color: #555; }
+        .card .actions { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+        
+        /* Badges */
         .badge {
             display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
+            padding: 4px 12px;
+            border-radius: 20px;
             font-size: 12px;
-            font-weight: bold;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .badge-red { background-color: #fdecea; color: #c0392b; }
-        .badge-orange { background-color: #fef3e2; color: #d35400; }
-        .badge-yellow { background-color: #fef9e7; color: #b7950b; }
-        .badge-green { background-color: #eafaf1; color: #1e8449; }
-        .badge-gray { background-color: #f2f3f4; color: #555; }
+        
+        .badge-red { background-color: #fadbd8; color: #c0392b; }
+        .badge-orange { background-color: #fdebd0; color: #d35400; }
+        .badge-yellow { background-color: #f9e79f; color: #b7950b; }
+        .badge-green { background-color: #d5f4e6; color: #1e8449; }
+        .badge-gray { background-color: #ecf0f1; color: #555; }
+        
+        /* Tables */
         table {
             width: 100%;
             border-collapse: collapse;
             background: white;
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
+        
         th {
-            background-color: #2c7a7b;
+            background: linear-gradient(135deg, #1e7a7e 0%, #2c9299 100%);
             color: white;
-            padding: 12px 16px;
+            padding: 14px 16px;
             text-align: left;
             font-size: 14px;
+            font-weight: 600;
         }
-        td { padding: 10px 16px; border-bottom: 1px solid #ecf0f1; font-size: 14px; }
+        
+        td { 
+            padding: 12px 16px;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 14px;
+        }
+        
         tr:last-child td { border-bottom: none; }
-        tr:hover td { background-color: #f9f9f9; }
-        form label { display: block; margin-bottom: 4px; font-size: 14px; font-weight: bold; }
+        tr:hover td { background-color: #f9fafb; }
+        
+        /* Forms */
+        form label { 
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
         form input, form select, form textarea {
             width: 100%;
-            padding: 8px 10px;
+            padding: 10px 12px;
             margin-bottom: 16px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            border: 1px solid #dfe6e9;
+            border-radius: 6px;
             font-size: 14px;
             font-family: inherit;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
-        form input[type="checkbox"] { width: auto; }
+        
+        form input:focus, form select:focus, form textarea:focus {
+            outline: none;
+            border-color: #2c9299;
+            box-shadow: 0 0 0 3px rgba(44, 146, 153, 0.1);
+        }
+        
+        form input[type="checkbox"] { 
+            width: auto;
+            margin-right: 8px;
+        }
+        
+        form input[type="checkbox"] + label {
+            display: inline;
+            margin-bottom: 0;
+        }
+        
         form button[type="submit"] {
-            padding: 10px 20px;
-            background-color: #2c7a7b;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #1e7a7e 0%, #2c9299 100%);
             color: white;
             border: none;
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 15px;
+            font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s ease;
         }
-        form button[type="submit"]:hover { background-color: #245f60; }
-        .messages { margin-bottom: 16px; }
-        .message { padding: 10px 16px; border-radius: 4px; margin-bottom: 8px; font-size: 14px; }
-        .message-success { background-color: #eafaf1; color: #1e8449; }
-        .message-error { background-color: #fdecea; color: #c0392b; }
-        .empty { color: #888; font-style: italic; }
+        
+        form button[type="submit"]:hover { 
+            background: linear-gradient(135deg, #1a6a6f 0%, #22798a 100%);
+            box-shadow: 0 4px 12px rgba(30, 122, 126, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        /* Messages */
+        .messages { margin-bottom: 20px; }
+        .message { 
+            padding: 14px 16px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            border-left: 4px solid;
+        }
+        .message-success { 
+            background-color: #d5f4e6;
+            color: #0b5345;
+            border-left-color: #1e8449;
+        }
+        .message-error { 
+            background-color: #fadbd8;
+            color: #78281f;
+            border-left-color: #c0392b;
+        }
+        
+        /* Utilities */
+        .empty { 
+            color: #888;
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .filter-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+        
+        .results-count {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 16px;
+        }
+        
+        .results-count .filtered {
+            color: #2c9299;
+            font-weight: 600;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                padding: 12px 20px;
+                gap: 8px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            h2 {
+                font-size: 20px;
+            }
+            
+            .container {
+                padding: 20px 16px;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            td, th {
+                padding: 8px 12px;
+            }
+        }
     </style>
 </head>
 <body>
     <nav>
-        <a href="{% url 'recording_list' %}" class="brand">NT Wildlife Recording System</a>
+        <a href="{% url 'recording_list' %}" class="brand">🦁 NT Wildlife Recording System</a>
         <a href="{% url 'recording_list' %}">Recordings</a>
         <a href="{% url 'species_list' %}">Species</a>
         <a href="{% url 'anomaly_list' %}">Anomalies</a>

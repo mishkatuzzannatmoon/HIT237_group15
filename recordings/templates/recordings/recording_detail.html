@@ -1,53 +1,181 @@
 {% extends 'base.html' %}
 {% block title %}{{ object.species.common_name }} — NT Wildlife Recording System{% endblock %}
 {% block content %}
-<h1>{{ object.species.common_name }}</h1>
-<div class="card">
-    <p><strong>Scientific name:</strong> {{ object.species.scientific_name }}</p>
-    <p><strong>Location:</strong> {{ object.location_name|default:"Not specified" }}</p>
-    <p><strong>Coordinates:</strong> {{ object.latitude }}, {{ object.longitude }}</p>
-    <p><strong>Recorded at:</strong> {{ object.recorded_at|date:"d M Y H:i" }}</p>
-    <p><strong>Recorded by:</strong> {{ object.recorded_by|default:"Anonymous" }}</p>
-    <p><strong>Record type:</strong> {{ object.record_type|default:"Unknown" }}</p>
-    <p><strong>Confidence score:</strong> {{ object.confidence_score }}</p>
-    <p><strong>Anomaly:</strong>
-    {% if can_flag %}
-        <a href="{% url 'anomaly_create' object.pk %}" class="button-sm">Flag as Anomaly</a>
-    {% elif has_resolved_flag %}
-        <span class="badge badge-green">Resolved</span>
-    {% elif object.is_anomaly %}
-        <span class="badge badge-red">Found</span>
-    {% endif %}
-    </p>
-    {% if object.audio_file %}
-        <p><strong>Audio:</strong> <audio controls src="{{ object.audio_file.url }}"></audio></p>
-    {% else %}
-        <p><strong>Audio:</strong> No file uploaded</p>
-    {% endif %}
-    {% if object.notes %}
-        <p><strong>Notes:</strong> {{ object.notes }}</p>
-    {% endif %}
-    <div class="actions">
-        <a href="{% url 'recording_update' object.pk %}" class="button-sm button-secondary">Edit</a>
-        <a href="{% url 'recording_delete' object.pk %}" class="button-sm button-danger">Delete</a>
-        <a href="{% url 'anomaly_create' object.pk %}" class="button-sm">Flag as Anomaly</a>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <h1>🎵 {{ object.species.common_name }}</h1>
+        <p style="font-size: 14px; color: #666; margin: 0;"><em>{{ object.species.scientific_name }}</em></p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <a href="{% url 'recording_update' object.pk %}" class="button-sm button-secondary">✏️ Edit</a>
+        <a href="{% url 'recording_delete' object.pk %}" class="button-sm button-danger">🗑️ Delete</a>
     </div>
 </div>
 
-{% if object.flags.all %}
-<h2>Anomaly Flags</h2>
-{% for flag in object.flags.all %}
-    <div class="card">
-        <p><strong>Reason:</strong> {{ flag.reason }}</p>
-        <p><strong>Flagged by:</strong> {{ flag.flagged_by|default:"Unknown" }}</p>
-        <p><strong>Resolved:</strong> {% if flag.resolved %}Yes{% else %}No{% endif %}</p>
-        <div class="actions">
-            <a href="{% url 'anomaly_update' flag.pk %}" class="button-sm button-secondary">Edit</a>
-            <a href="{% url 'anomaly_delete' flag.pk %}" class="button-sm button-danger">Delete</a>
+<!-- Main Recording Information -->
+<div class="card">
+    <h3>🎙️ Recording Information</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-top: 16px;">
+        <div>
+            <p style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 4px;">📊 Conservation Status</p>
+            {% with status=object.species.conservation_status %}
+                {% if status == 'CR' %}
+                    <span class="badge badge-red">{{ object.species.get_conservation_status_display }}</span>
+                {% elif status == 'EN' %}
+                    <span class="badge badge-orange">{{ object.species.get_conservation_status_display }}</span>
+                {% elif status == 'VU' %}
+                    <span class="badge badge-yellow">{{ object.species.get_conservation_status_display }}</span>
+                {% elif status == 'LC' %}
+                    <span class="badge badge-green">{{ object.species.get_conservation_status_display }}</span>
+                {% else %}
+                    <span class="badge badge-gray">{{ object.species.get_conservation_status_display }}</span>
+                {% endif %}
+            {% endwith %}
+        </div>
+        
+        <div>
+            <p style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 4px;">📝 Record Type</p>
+            <p style="margin: 0;"><strong>{{ object.get_record_type_display }}</strong></p>
+        </div>
+        
+        <div>
+            <p style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 4px;">📅 Recorded</p>
+            <p style="margin: 0;"><strong>{{ object.recorded_at|date:"d M Y H:i" }}</strong></p>
         </div>
     </div>
-{% endfor %}
+</div>
+
+<!-- Location Information -->
+<div class="card">
+    <h3>📍 Location Details</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-top: 16px;">
+        <div>
+            <p style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 4px;">Location Name</p>
+            <p style="margin: 0;"><strong>{{ object.location_name|default:"Not specified" }}</strong></p>
+        </div>
+        
+        <div>
+            <p style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 4px;">📡 Coordinates</p>
+            <p style="margin: 0;"><strong>{{ object.latitude }}, {{ object.longitude }}</strong></p>
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: #888;">
+                <a href="https://www.google.com/maps/?q={{ object.latitude }},{{ object.longitude }}" target="_blank" style="color: #2c9299; text-decoration: none;">View on Google Maps →</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Recording Metadata -->
+<div class="card">
+    <h3>📊 Recording Metadata</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-top: 16px;">
+        <div>
+            <p style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 4px;">Confidence Score</p>
+            <div>
+                <p style="margin: 0; font-size: 24px; font-weight: 700; color: {% if object.confidence_score >= 0.8 %}#1e8449{% elif object.confidence_score >= 0.5 %}#d35400{% else %}#c0392b{% endif %};">
+                    {{ object.confidence_score|floatformat:2 }}
+                </p>
+                <div style="width: 100%; height: 8px; background: #ecf0f1; border-radius: 4px; margin-top: 8px; overflow: hidden;">
+                    <div style="width: {{ object.confidence_score|floatformat:0 }}%; height: 100%; background: {% if object.confidence_score >= 0.8 %}#1e8449{% elif object.confidence_score >= 0.5 %}#d35400{% else %}#c0392b{% endif %}; transition: width 0.3s ease;"></div>
+                </div>
+                <p style="margin: 8px 0 0 0; font-size: 12px; color: #888;">
+                    {% if object.confidence_score >= 0.8 %}
+                        ✅ High confidence
+                    {% elif object.confidence_score >= 0.5 %}
+                        ⚠️ Medium confidence
+                    {% else %}
+                        ❌ Low confidence
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        
+        <div>
+            <p style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 4px;">Recorded By</p>
+            <p style="margin: 0;"><strong>{{ object.recorded_by|default:"Anonymous" }}</strong></p>
+        </div>
+        
+        <div>
+            <p style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 4px;">⚠️ Anomaly Status</p>
+            {% if can_flag %}
+                <span class="badge badge-yellow">Pending Review</span>
+                <p style="margin: 8px 0 0 0;">
+                    <a href="{% url 'anomaly_create' object.pk %}" class="button-sm" style="display: inline-block;">🚩 Flag as Anomaly</a>
+                </p>
+            {% elif has_resolved_flag %}
+                <span class="badge badge-green">✓ Resolved</span>
+            {% elif object.is_anomaly %}
+                <span class="badge badge-red">⚠️ Flagged as Anomaly</span>
+            {% else %}
+                <span class="badge badge-green">✓ Normal</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Audio File -->
+{% if object.audio_file %}
+<div class="card">
+    <h3>🎧 Audio File</h3>
+    <div style="margin-top: 16px;">
+        <audio controls style="width: 100%; max-width: 400px;">
+            <source src="{{ object.audio_file.url }}" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        <p style="margin: 12px 0 0 0; font-size: 12px; color: #888;">
+            📥 <a href="{{ object.audio_file.url }}" download style="color: #2c9299; text-decoration: none;">Download Audio File</a>
+        </p>
+    </div>
+</div>
+{% else %}
+<div class="card" style="background-color: #f9f9f9; border-left-color: #d3d3d3;">
+    <p style="color: #888; margin: 0;">🔇 No audio file available</p>
+</div>
 {% endif %}
 
-<a href="{% url 'recording_list' %}" class="button-sm button-secondary">← Back to Recordings</a>
+<!-- Notes -->
+{% if object.notes %}
+<div class="card">
+    <h3>📝 Notes</h3>
+    <p style="margin: 16px 0 0 0; white-space: pre-wrap; line-height: 1.6;">{{ object.notes }}</p>
+</div>
+{% endif %}
+
+<!-- Anomaly Flags Section -->
+{% if object.flags.all %}
+<div style="margin-top: 32px;">
+    <h2>⚠️ Anomaly Flags ({{ object.flags.count }})</h2>
+    {% for flag in object.flags.all %}
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+            <div>
+                <h3 style="margin: 0;">Flag #{{ forloop.counter }}</h3>
+                <p style="margin: 4px 0 0 0; font-size: 12px; color: #888;">
+                    Flagged by {{ flag.flagged_by|default:"Anonymous" }}
+                    {% if flag.resolved %}
+                        • <span class="badge badge-green">Resolved</span>
+                    {% else %}
+                        • <span class="badge badge-red">Open</span>
+                    {% endif %}
+                </p>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+                <a href="{% url 'anomaly_update' flag.pk %}" class="button-sm button-secondary">✏️ Edit</a>
+                <a href="{% url 'anomaly_delete' flag.pk %}" class="button-sm button-danger">🗑️ Delete</a>
+            </div>
+        </div>
+
+        <div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-top: 12px;">
+            <p style="margin: 0; white-space: pre-wrap; line-height: 1.6;">{{ flag.reason }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Back Navigation -->
+<div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #ecf0f1;">
+    <a href="{% url 'recording_list' %}" class="button-sm button-secondary">← Back to Recordings</a>
+    <a href="{% url 'species_detail' object.species.pk %}" class="button-sm" style="margin-left: 8px;">View All Recordings of This Species →</a>
+</div>
 {% endblock %}

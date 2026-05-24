@@ -1,40 +1,96 @@
 {% extends 'base.html' %}
 {% block title %}{{ title|default:"Anomalies" }} — NT Wildlife Recording System{% endblock %}
 {% block content %}
-<h1>{{ title|default:"Anomaly Flags" }}</h1>
+<h1>⚠️ Anomaly Flags</h1>
 {% if anomalies %}
+    <p style="margin-bottom: 20px; font-size: 14px; color: #666;">
+        <strong>📊 Total Flags:</strong> {{ anomalies|length }}
+        {% if open_flags_count or resolved_flags_count %}
+            • <span style="color: #c0392b; font-weight: 600;">{{ open_flags_count }} Open</span>
+            {% if resolved_flags_count %}
+                • <span style="color: #2ecc71; font-weight: 600;">{{ resolved_flags_count }} Resolved</span>
+            {% endif %}
+        {% endif %}
+    </p>
     <table>
         <thead>
             <tr>
-                <th>Recording</th>
-                <th>Reason</th>
-                <th>Flagged by</th>
-                <th>Resolved</th>
-                <th>Actions</th>
+                <th>🎵 Recording</th>
+                <th>🦁 Species</th>
+                <th>⚠️ Reason</th>
+                <th>👤 Flagged By</th>
+                <th>📊 Status</th>
+                <th>⚙️ Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for anomaly in anomalies %}
             <tr>
-                <td><a href="{% url 'recording_detail' anomaly.recording.pk %}">{{ anomaly.recording }}</a></td>
-                <td>{{ anomaly.reason|truncatechars:60 }}</td>
-                <td>{{ anomaly.flagged_by|default:"Unknown" }}</td>
                 <td>
-                    {% if anomaly.resolved %}
-                        <span class="badge badge-green">Resolved</span>
-                    {% else %}
-                        <span class="badge badge-red">Open</span>
-                    {% endif %}
+                    <a href="{% url 'recording_detail' anomaly.recording.pk %}" 
+                       style="color: #2c9299; text-decoration: none; font-weight: 600;">
+                        #{{ forloop.counter }}
+                    </a>
+                    <br>
+                    <span style="color: #888; font-size: 12px;">
+                        {{ anomaly.recording.recorded_at|date:"d M Y H:i" }}
+                    </span>
                 </td>
                 <td>
-                    <a href="{% url 'anomaly_update' anomaly.pk %}" class="button-sm button-secondary">Edit</a>
-                    <a href="{% url 'anomaly_delete' anomaly.pk %}" class="button-sm button-danger">Delete</a>
+                    <strong>{{ anomaly.recording.species.common_name }}</strong>
+                    <br>
+                    <em style="color: #888; font-size: 12px;">
+                        {{ anomaly.recording.species.scientific_name }}
+                    </em>
+                </td>
+                <td>
+                    <span title="{{ anomaly.reason }}">
+                        {{ anomaly.reason }}
+                    </span>
+                </td>
+                <td>
+                    {{ anomaly.flagged_by|default:"Anonymous" }}
+                </td>
+                <td>
+                    {% if anomaly.resolved %}
+                        <span class="badge badge-green" style="white-space: nowrap;">
+                            ✓ Resolved
+                        </span>
+                    {% else %}
+                        <span class="badge badge-red" style="white-space: nowrap;">
+                            ⏳ Open
+                        </span>
+                    {% endif %}
+                </td>
+                <td style="white-space: nowrap;">
+                    <a href="{% url 'anomaly_update' anomaly.pk %}" 
+                       class="button-sm button-secondary">
+                        ✏️ Edit
+                    </a>
+                    <a href="{% url 'anomaly_delete' anomaly.pk %}" 
+                       class="button-sm button-danger">
+                        🗑️ Delete
+                    </a>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    <div style="margin-top: 30px;">
+        <a href="{% url 'recording_list' %}" 
+           class="button"
+           style="display: inline-flex; align-items: center; text-decoration: none;">
+            ← Back to Recordings
+        </a>
+    </div>
 {% else %}
-    <p class="empty">No anomaly flags found.</p>
+    <div class="card" style="text-align: center; border-left: none;">
+        <p style="font-size: 16px; color: #888; margin: 0;">
+            ✓ No anomaly flags yet!
+        </p>
+        <p style="font-size: 13px; color: #aaa; margin: 8px 0 0 0;">
+            All recordings are looking good.
+        </p>
+    </div>
 {% endif %}
 {% endblock %}

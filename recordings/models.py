@@ -38,7 +38,7 @@ class Species(models.Model):
         return f"{self.common_name} ({self.scientific_name})"
  
     def get_absolute_url(self):
-        return reverse('recordings:species-detail', kwargs={'pk': self.pk})
+        return reverse('species_detail', kwargs={'pk': self.pk})
  
     @property
     def conversation_status(self):
@@ -121,7 +121,7 @@ class AudioRecording(models.Model):
         )
  
     def get_absolute_url(self):
-        return reverse('recordings:detail', kwargs={'pk': self.pk})
+        return reverse('recording_detail', kwargs={'pk': self.pk})
  
     def flag_as_anomaly(self, reason: str, flagged_by) -> 'AnomalyFlag':
     

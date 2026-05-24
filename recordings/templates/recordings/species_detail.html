@@ -1,28 +1,117 @@
 {% extends 'base.html' %}
 {% block title %}{{ object.common_name }} — NT Wildlife Recording System{% endblock %}
 {% block content %}
-<h1>{{ object.common_name }}</h1>
-<div class="card">
-    <p><strong>Scientific name:</strong> <em>{{ object.scientific_name }}</em></p>
-    <p><strong>Conservation status:</strong> {{ object.get_conservation_status_display }}</p>
-    <p><strong>Threatened:</strong> {% if object.is_threatened %}Yes{% else %}No{% endif %}</p>
-    <p><strong>Native to NT:</strong> {% if object.is_native %}Yes{% else %}No{% endif %}</p>
-    <p><strong>Not Native to NT:</strong> {% if object.not_native %}Yes{% else %}No{% endif %}</p>
-    {% if object.description %}<p><strong>Description:</strong> {{ object.description }}</p>{% endif %}
-    <div class="actions">
-        <a href="{% url 'species_update' object.pk %}" class="button-sm button-secondary">Edit</a>
-        <a href="{% url 'species_delete' object.pk %}" class="button-sm button-danger">Delete</a>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <h1>🦁 {{ object.common_name }}</h1>
+        <p style="font-size: 14px; color: #666; margin: 0;"><em>{{ object.scientific_name }}</em></p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <a href="{% url 'species_update' object.pk %}" class="button-sm button-secondary">✏️ Edit</a>
+        <a href="{% url 'species_delete' object.pk %}" class="button-sm button-danger">🗑️ Delete</a>
     </div>
 </div>
-<h2>Recordings of this species</h2>
-{% for recording in object.recordings.all %}
-    <div class="card">
-        <p>{{ recording.location_name|default:"Unknown location" }} — {{ recording.recorded_at|date:"d M Y" }}</p>
-        <p>Confidence: {{ recording.confidence_score }}</p>
-        <a href="{% url 'recording_detail' recording.pk %}" class="button-sm">View</a>
+
+<!-- Species Information -->
+<div class="card">
+    <h3>📋 Species Information</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-top: 16px;">
+        <div>
+            <p style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 4px;">📊 Conservation Status</p>
+            {% if object.conservation_status == 'CR' %}
+                <span class="badge badge-red">{{ object.get_conservation_status_display }}</span>
+            {% elif object.conservation_status == 'EN' %}
+                <span class="badge badge-orange">{{ object.get_conservation_status_display }}</span>
+            {% elif object.conservation_status == 'VU' %}
+                <span class="badge badge-yellow">{{ object.get_conservation_status_display }}</span>
+            {% elif object.conservation_status == 'LC' %}
+                <span class="badge badge-green">{{ object.get_conservation_status_display }}</span>
+            {% else %}
+                <span class="badge badge-gray">{{ object.get_conservation_status_display }}</span>
+            {% endif %}
+        </div>
+        
+        <div>
+            <p style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 4px;">📍 Distribution</p>
+            <div>
+                {% if object.is_native %}
+                    <p style="margin: 0; color: #1e8449; font-weight: 600;">✓ Native to NT</p>
+                {% endif %}
+                {% if object.not_native %}
+                    <p style="margin: 0; color: #d35400; font-weight: 600;">✗ Non-native to NT</p>
+                {% endif %}
+                {% if not object.is_native and not object.not_native %}
+                    <p style="margin: 0; color: #888;">— Not specified</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
-{% empty %}
-    <p class="empty">No recordings for this species yet.</p>
-{% endfor %}
-<a href="{% url 'species_list' %}" class="button-sm button-secondary">← Back to Species</a>
+</div>
+
+<!-- Description -->
+{% if object.description %}
+<div class="card">
+    <h3>📖 Description</h3>
+    <p style="margin: 16px 0 0 0; white-space: pre-wrap; line-height: 1.6;">{{ object.description }}</p>
+</div>
+{% endif %}
+
+<!-- Recordings Section -->
+<div style="margin-top: 32px;">
+    <h2>🎵 Recordings of This Species</h2>
+    
+    {% if object.recordings.all %}
+        <p style="margin-bottom: 16px; font-size: 14px; color: #666;">
+            <strong>📊 Total Recordings:</strong> {{ object.recordings.count }}
+        </p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
+            {% for recording in object.recordings.all|dictsort:"recorded_at"|slice:":20" %}
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                    <div>
+                        <h4 style="margin: 0; color: #1e3a5f;">📍 {{ recording.location_name|default:"Unknown Location" }}</h4>
+                        <p style="margin: 4px 0 0 0; font-size: 12px; color: #888;">{{ recording.recorded_at|date:"d M Y H:i" }}</p>
+                    </div>
+                    {% if recording.is_anomaly %}
+                        <span class="badge badge-red">⚠️ Anomaly</span>
+                    {% else %}
+                        <span class="badge badge-green">✓ Normal</span>
+                    {% endif %}
+                </div>
+                
+                <div style="margin: 12px 0;">
+                    <p style="margin: 0; font-size: 12px; color: #666;"><strong>Confidence:</strong></p>
+                    <div style="width: 100%; height: 8px; background: #ecf0f1; border-radius: 4px; margin-top: 4px; overflow: hidden;">
+                        <div style="width: {{ recording.confidence_score|floatformat:0 }}%; height: 100%; background: {% if recording.confidence_score >= 0.8 %}#1e8449{% elif recording.confidence_score >= 0.5 %}#d35400{% else %}#c0392b{% endif %};"></div>
+                    </div>
+                    <p style="margin: 4px 0 0 0; font-size: 12px; color: #888;">{{ recording.confidence_score|floatformat:2 }}</p>
+                </div>
+                
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #ecf0f1;">
+                    <a href="{% url 'recording_detail' recording.pk %}" class="button-sm" style="display: inline-block;">👁️ View Recording</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if object.recordings.count > 20 %}
+            <p style="margin-top: 16px; text-align: center; color: #888; font-size: 12px;">
+                ... and {{ object.recordings.count|add:"-20" }} more recordings
+            </p>
+        {% endif %}
+    {% else %}
+        <div class="card" style="text-align: center; border-left: none;">
+            <p style="font-size: 16px; color: #888; margin: 0;">🔇 No recordings of this species yet.</p>
+            <p style="font-size: 13px; color: #aaa; margin: 8px 0 0 0;">
+                <a href="{% url 'recording_create' %}" style="color: #2c9299; text-decoration: none; font-weight: 600;">Record this species →</a>
+            </p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Back Navigation -->
+<div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #ecf0f1;">
+    <a href="{% url 'species_list' %}" class="button-sm button-secondary">← Back to Species List</a>
+</div>
 {% endblock %}

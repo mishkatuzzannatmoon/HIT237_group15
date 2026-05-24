@@ -94,6 +94,12 @@ class AnomalyListView(ListView):
     def get_queryset(self):
         return AnomalyFlag.objects.select_related('recording__species', 'flagged_by')
  
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['open_flags_count'] = self.get_queryset().filter(resolved=False).count()
+        context['resolved_flags_count'] = self.get_queryset().filter(resolved=True).count()
+        return context
+ 
 class AnomalyCreateView(CreateView):
     model = AnomalyFlag
     form_class = AnomalyFlagForm

@@ -1,24 +1,32 @@
 {% extends 'base.html' %}
 {% block title %}{{ title|default:"Species" }} — NT Wildlife Recording System{% endblock %}
 {% block content %}
-<h1>{{ title|default:"Species" }}</h1>
-<a href="{% url 'species_create' %}" class="button">+ Add Species</a>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1>🦁 Species Directory</h1>
+    <a href="{% url 'species_create' %}" class="button">+ Add New Species</a>
+</div>
+
 {% if species_list %}
     <table>
         <thead>
             <tr>
-                <th>Common name</th>
-                <th>Scientific name</th>
-                <th>Conservation status</th>
-                <th>Endemic</th>
-                <th>Actions</th>
+                <th>🦁 Species Name</th>
+                <th>🧬 Scientific Name</th>
+                <th>📊 Conservation Status</th>
+                <th>📍 Distribution</th>
+                <th>🎵 Recordings</th>
+                <th>⚙️ Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for species in species_list %}
             <tr>
-                <td>{{ species.common_name }}</td>
-                <td><em>{{ species.scientific_name }}</em></td>
+                <td>
+                    <strong>{{ species.common_name }}</strong>
+                </td>
+                <td>
+                    <em style="color: #888;">{{ species.scientific_name }}</em>
+                </td>
                 <td>
                     {% if species.conservation_status == 'CR' %}
                         <span class="badge badge-red">{{ species.get_conservation_status_display }}</span>
@@ -35,20 +43,40 @@
                     {% elif species.conservation_status == 'NE' %}
                         <span class="badge badge-gray">{{ species.get_conservation_status_display }}</span>
                     {% else %}
-                        <span class="badge badge-gray">{{ recording.species.get_conservation_status_display }}</span>
+                        <span class="badge badge-gray">{{ species.get_conservation_status_display }}</span>
                     {% endif %}
                 </td>
-                <td>{% if species.is_native %}Yes{% else %}No{% endif %}</td>
                 <td>
-                    <a href="{% url 'species_detail' species.pk %}" class="button-sm">View</a>
-                    <a href="{% url 'species_update' species.pk %}" class="button-sm button-secondary">Edit</a>
-                    <a href="{% url 'species_delete' species.pk %}" class="button-sm button-danger">Delete</a>
+                    {% if species.is_native %}
+                        <span style="color: #1e8449; font-weight: 600;">✓ Native</span>
+                    {% elif species.not_native %}
+                        <span style="color: #d35400; font-weight: 600;">✗ Non-native</span>
+                    {% else %}
+                        <span style="color: #888;">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span style="background: #ecf0f1; padding: 4px 8px; border-radius: 4px; font-weight: 600;">{{ species.recordings.count }}</span>
+                </td>
+                <td style="white-space: nowrap;">
+                    <a href="{% url 'species_detail' species.pk %}" class="button-sm">👁️ View</a>
+                    <a href="{% url 'species_update' species.pk %}" class="button-sm button-secondary">✏️ Edit</a>
+                    <a href="{% url 'species_delete' species.pk %}" class="button-sm button-danger">🗑️ Delete</a>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    
+    <p style="margin-top: 20px; font-size: 14px; color: #666;">
+        <strong>📊 Total:</strong> {{ species_list|length }} species
+    </p>
 {% else %}
-    <p class="empty">No species found.</p>
+    <div class="card" style="text-align: center; border-left: none;">
+        <p style="font-size: 16px; color: #888; margin: 0;">📭 No species recorded yet.</p>
+        <p style="font-size: 13px; color: #aaa; margin: 8px 0 0 0;">
+            <a href="{% url 'species_create' %}" style="color: #2c9299; text-decoration: none; font-weight: 600;">Add the first species →</a>
+        </p>
+    </div>
 {% endif %}
 {% endblock %}

@@ -1,14 +1,43 @@
 {% extends 'base.html' %}
 {% block title %}Delete Species — NT Wildlife Recording System{% endblock %}
 {% block content %}
-<h1>Delete Species</h1>
-<div class="card">
-    <p>Are you sure you want to delete <strong>{{ object.common_name }}</strong> (<em>{{ object.scientific_name }}</em>)?</p>
-    <p style="color: #c0392b; margin-top: 8px;">This will also delete all recordings linked to this species. This action cannot be undone.</p>
-    <form method="post" style="margin-top: 16px;">
-        {% csrf_token %}
-        <button type="submit" class="button-sm button-danger">Yes, delete</button>
-        <a href="{% url 'species_list' %}" class="button-sm button-secondary" style="margin-left:8px;">Cancel</a>
-    </form>
+<h1>🗑️ Delete Species</h1>
+
+<div class="card" style="background: #fdecea; border-left-color: #c0392b;">
+    <div style="display: flex; align-items: start; gap: 16px;">
+        <div style="font-size: 40px; flex-shrink: 0;">⚠️</div>
+        <div>
+            <h3 style="margin-top: 0; color: #c0392b;">Confirm Deletion</h3>
+            <p style="margin: 12px 0;">
+                Are you sure you want to delete this species?
+            </p>
+            <div style="background: white; padding: 12px; border-radius: 6px; border-left: 4px solid #d35400; margin: 16px 0;">
+                <p style="margin: 0; font-weight: 600;">🦁 {{ object.common_name }}</p>
+                <p style="margin: 4px 0 0 0; font-size: 13px; color: #888;">
+                    <em>{{ object.scientific_name }}</em>
+                </p>
+            </div>
+            <div style="background: #fff3e2; padding: 12px; border-radius: 6px; border-left: 4px solid #d35400; margin: 16px 0;">
+                <p style="margin: 0; font-size: 13px; font-weight: 600; color: #d35400;">
+                    ⚠️ This will also delete:
+                </p>
+                <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 13px;">
+                    <li>All {{ object.recordings.count }} recording{{ object.recordings|pluralize }} of this species</li>
+                    <li>All associated anomaly flags</li>
+                </ul>
+            </div>
+            <p style="color: #c0392b; margin-top: 12px; font-weight: 600;">
+                ⚠️ This action cannot be undone.
+            </p>
+            
+            <div style="display: flex; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(192, 57, 43, 0.2);">
+                <form method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="button-sm button-danger">🗑️ Yes, Delete This Species</button>
+                </form>
+                <a href="{% url 'species_detail' object.pk %}" class="button-sm button-secondary">← Cancel & Go Back</a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
