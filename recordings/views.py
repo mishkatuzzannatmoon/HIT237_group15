@@ -5,6 +5,7 @@ from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.views import View
+from django.http import HttpResponseNotAllowed
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
@@ -238,9 +239,8 @@ class RegisterView(View):
 
 class LogoutView(View):
     def get(self, request):
-        logout(request)
-        messages.info(request, 'You have been logged out.')
-        return redirect('login')
+        # Only allow logout via POST for safety; GET should return 405
+        return HttpResponseNotAllowed(['POST'])
 
     def post(self, request):
         logout(request)
