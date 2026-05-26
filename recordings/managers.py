@@ -96,5 +96,23 @@ class RecordingManager(models.Manager):
     def with_details(self):
         return self.get_queryset().with_details()
 
+    def by_species(self, species_id):
+        return self.get_queryset().by_species(species_id)
+
+    def by_conservation_status(self, status):
+        return self.get_queryset().by_conservation_status(status)
+
+    def by_record_type(self, record_type):
+        return self.get_queryset().by_record_type(record_type)
+
+    def from_date(self, date_from):
+        return self.get_queryset().from_date(date_from)
+
+    def to_date(self, date_to):
+        return self.get_queryset().to_date(date_to)
+
+    def no_anomalies(self):
+        return self.get_queryset().no_anomalies()
+
     def filter_by_params(self, request):
         return self.get_queryset().filter_by_params(request)
