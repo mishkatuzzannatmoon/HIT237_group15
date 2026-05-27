@@ -5,7 +5,7 @@
 **Repository:** https://github.com/mishkatuzzannatmoon/HIT237_group15  
 **Author (ADR):** Md Rakibul Hassan Emon (S375332)
 
-**Last Updated:** 15 April 2026
+**Last Updated:** 28 May 2026
 
 ---
 
@@ -179,7 +179,7 @@ We use a custom manager for AudioRecording and centralize query logic through ma
 ### Code References
 - recordings/managers.py – RecordingManager
 - recordings/views.py – RecordingListView.get_queryset()
-- recordings/views.py – with_details() and filter_by_params()
+- recordings/managers.py – with_details() and filter_by_params()
 
 ### Consequences
 This keeps the list view cleaner and makes the filtering logic easier to extend later. It also improves consistency because one query pipeline can be reused instead of rewriting similar logic in multiple places.
@@ -271,6 +271,14 @@ Templates are stored at the app level inside:
 
 recordings/templates/recordings/
 
+Authentication templates are also stored in the app under:
+
+recordings/templates/accounts/
+
+The base layout lives at:
+
+recordings/templates/base.html
+
 The project uses descriptive template names such as:
 
 - species_list.html
@@ -284,6 +292,8 @@ The project uses descriptive template names such as:
 
 ### Code References
 - recordings/templates/recordings/
+- recordings/templates/accounts/
+- recordings/templates/base.html
 - recordings/views.py – template_name usage
 
 ### Consequences
@@ -312,18 +322,142 @@ This follows Django's **"Batteries included"** philosophy — it works immediate
 
 ### Code References
 - wildlife_project/settings.py – DATABASES configuration
-- ```python
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+- db.sqlite3 – local development database file
+- .gitignore – should ignore db.sqlite3 (local-only)
 
 ### Consequences
 - Any team member can run the project immediately without installing a database server.
 - For real production deployment, the database should be changed to PostgreSQL.
 - The db.sqlite3 file is listed in .gitignore so it is not committed to the repository.
+
+---
+
+## ADR-011: Service Layer for Domain Operations (Create/Update/Delete/Flag/Resolve)
+
+**Status:** Accepted
+
+### Context
+Several operations (creating/updating recordings, validating confidence bounds, enforcing “only owner can edit/delete/flag”, and updating anomaly state) require consistent rules. Putting these rules only in views risks duplication and makes testing/maintenance harder.
+
+### Alternatives Considered
+| Option | Pros | Cons |
+| ------ | ---- | ---- |
+| Put all logic in views | Quick to implement | Duplicated rules; hard to reuse; views become large |
+| Put all logic in models only | Encapsulates domain | Can overgrow models; harder to coordinate cross-model actions |
+| Service module for operations | Centralizes rules; reusable; works well with CBVs | Another layer to understand |
+
+### Decision
+We implemented a small service layer in `recordings/services.py` and call it from CBVs. Services handle domain rules and validation, while views stay focused on HTTP flow and messaging.
+
+### Code References
+- recordings/services.py – `create_recording`, `update_recording`, `delete_recording`
+- recordings/services.py – `flag_recording`, `resolve_flag`
+- recordings/views.py – CBVs call into `services.*`
+
+### Consequences
+- Business rules are centralized and easier to maintain
+- Views remain relatively thin and consistent
+- Behavior is easier to test and reason about
+
+---
+
+## ADR-012: Authentication & Authorization via Django Auth + Mixins
+
+**Status:** Accepted
+
+### Context
+The app needs authentication (login/register/logout) and per-object authorization (only the recording owner can edit/delete and flag anomalies; only the flag owner can edit/delete their anomaly flag).
+
+### Alternatives Considered
+| Option | Pros | Cons |
+| ------ | ---- | ---- |
+| Function-based checks in every view | Explicit | Repetitive; easy to miss |
+| CBV mixins (LoginRequiredMixin/UserPassesTestMixin) | Standard; reusable; clear intent | Requires understanding mixin flow |
+| Custom middleware for ownership | Central control | Overkill for this project’s scope |
+
+### Decision
+We use Django’s built-in auth system plus CBV mixins:
+- `LoginRequiredMixin` to require authentication for create/update/delete actions
+- `UserPassesTestMixin` with `test_func()` ownership checks for edits/deletes and anomaly creation
+
+Registration is handled via a custom `RegisterView` using a `RegisterForm` (Django `UserCreationForm`).
+
+### Code References
+- recordings/urls.py – `login/`, `logout/`, `register/`
+- wildlife_project/urls.py – includes `django.contrib.auth.urls` under `accounts/` and `recordings.urls` at root
+- recordings/views.py – mixins on `SpeciesCreateView`, `RecordingUpdateView`, `AnomalyUpdateView`, etc.
+- recordings/forms.py – `RegisterForm`
+
+### Consequences
+- Consistent access control across CRUD actions
+- Uses well-known Django patterns with minimal custom security code
+
+---
+
+## ADR-013: File Upload Handling via MEDIA_ROOT/MEDIA_URL (Audio Files)
+
+**Status:** Accepted
+
+### Context
+Audio recordings can include an uploaded audio file. We needed a simple storage approach that works for local development and fits Django conventions.
+
+### Alternatives Considered
+| Option | Pros | Cons |
+| ------ | ---- | ---- |
+| Store files in the database | Single storage location | Not recommended; inefficient |
+| Local filesystem via `MEDIA_ROOT` | Simple; default Django approach | Not production-grade by itself |
+| External object storage (e.g., S3) | Production-ready | Extra setup beyond project scope |
+
+### Decision
+We store uploaded audio files on the local filesystem using Django `FileField(upload_to=...)`, configured with `MEDIA_ROOT` and `MEDIA_URL`. In development, `wildlife_project/urls.py` serves media when `DEBUG=True`.
+
+### Code References
+- recordings/models.py – `AudioRecording.audio_file` (`upload_to='recordings/%Y/%m/'`)
+- wildlife_project/settings.py – `MEDIA_URL`, `MEDIA_ROOT`
+- wildlife_project/urls.py – `static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)` in DEBUG
+
+### Consequences
+- Works out-of-the-box for local development and assessment demos
+- A production deployment would typically switch to a dedicated file/media storage strategy
+
+---
+
+## ADR-014: Automated Testing with Django TestCase (Models, QuerySets, Services, Views/Auth)
+
+**Status:** Accepted
+
+### Context
+To keep the application reliable as features evolved (species CRUD, recording CRUD, filtering, anomaly workflows, and authentication), we needed repeatable checks that can be run quickly and consistently on any machine.
+
+### Alternatives Considered
+| Option | Pros | Cons |
+| ------ | ---- | ---- |
+| Manual UI testing only | Simple; no setup | Easy to miss regressions; slow; not repeatable |
+| Django built-in test framework (`TestCase`, `Client`) | Batteries included; fast; DB isolation | Less expressive than some third-party tools |
+| Third-party test runner (pytest-django) | Great ergonomics | Extra dependency/config beyond project scope |
+
+### Decision
+We use Django’s built-in test framework (`django.test.TestCase`) and HTTP client (`django.test.Client`) for automated tests, consolidated in `recordings/tests.py`.
+
+The test suite covers:
+- **Models**: `Species` and `AudioRecording` string representations, constraints, anomaly helper methods
+- **QuerySet/Manager filtering**: confidence buckets, anomalies, species filtering
+- **Services layer**: create/update/delete recordings, flag/resolve anomaly workflows, validation and permissions
+- **Views/auth & permissions**: recording list accessibility, create redirects when unauthenticated, ownership checks, login/register page availability, registration flow
+
+### Code References
+- recordings/tests.py – `SpeciesModelTest`, `AudioRecordingModelTest`
+- recordings/tests.py – `RecordingQuerySetTest`
+- recordings/tests.py – `CreateRecordingServiceTest`, `UpdateRecordingServiceTest`, `DeleteRecordingServiceTest`
+- recordings/tests.py – `FlagRecordingServiceTest`, `ResolveFlagServiceTest`
+- recordings/tests.py – `RecordingListViewTest`, `RecordingCreateViewTest`, `RecordingUpdateDeletePermissionTest`
+- recordings/tests.py – `AuthViewTest`
+- manage.py – run tests with `python manage.py test`
+
+### Consequences
+- Regressions are detected earlier with less manual verification
+- Business rules in `recordings/services.py` remain stable as views/templates change
+- Improves confidence when refactoring models/managers/views
 
 ## Summary Table
 
@@ -339,5 +473,9 @@ DATABASES = {
 | ADR-008 | Class-Based Views for CRUD operations | Explicit is Better |
 | ADR-009 | App-level template directory structure | Loose Coupling |
 | ADR-010 | SQLite for development | Batteries Included |
+| ADR-011 | Service layer for domain operations | Separation of Concerns |
+| ADR-012 | Auth via Django + CBV mixins | Secure by Default |
+| ADR-013 | Media uploads via MEDIA_ROOT/MEDIA_URL | Batteries Included |
+| ADR-014 | Automated tests with Django TestCase | Explicit is Better |
 
 Note: Code references are provided at file and class level to ensure consistency with evolving implementation.
