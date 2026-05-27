@@ -168,11 +168,19 @@ class AnomalyListView(ListView):
         context['resolved_flags_count'] = self.get_queryset().filter(resolved=True).count()
         return context
 
-class AnomalyCreateView(LoginRequiredMixin, CreateView):
+class AnomalyCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = AnomalyFlag
     form_class = AnomalyFlagForm
     template_name = 'recordings/anomaly_form.html'
     success_url = reverse_lazy('anomaly_list')
+
+    def test_func(self):
+        recording = get_object_or_404(AudioRecording, pk=self.kwargs['recording_pk'])
+        return self.request.user == recording.recorded_by
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'You can only flag your own recordings.')
+        return redirect('recording_list')
 
     def form_valid(self, form):
         try:
