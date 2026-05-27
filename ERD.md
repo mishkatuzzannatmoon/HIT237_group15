@@ -106,3 +106,6 @@ The following service functions sit between views and models:
 | /recordings/\<pk\>/delete/ | RecordingDeleteView | Login required + owner only |
 | /species/add/ | SpeciesCreateView | Login required |
 | /anomalies/add/\<pk\>/ | AnomalyCreateView | Login required |
+| /anomalies/\<pk\>/edit/ | AnomalyUpdateView | Login required + owner only |
+| /anomoalies/\<pk\>/delete/ | AnomalyDeleteView | Login required + owner only |
+
