@@ -1,8 +1,14 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views
 from . import views
-from django.contrib.auth.views import LoginView, LogoutView
 
 urlpatterns = [
+
+    # Registration
+    path('login/', auth_views.LoginView.as_view(template_name='accounts/login.html'), name='login'),
+    path('logout/', views.LogoutView.as_view(), name='logout'),
+    path('register/', views.RegisterView.as_view(), name='register'),
+    
     # Species
     path('species/', views.SpeciesListView.as_view(), name='species_list'),
     path('species/add/', views.SpeciesCreateView.as_view(), name='species_create'),
@@ -23,7 +29,4 @@ urlpatterns = [
     path('anomalies/<int:pk>/edit/', views.AnomalyUpdateView.as_view(), name='anomaly_update'),
     path('anomalies/<int:pk>/delete/', views.AnomalyDeleteView.as_view(), name='anomaly_delete'),
 
-    # Registration
-    path('login/', LoginView.as_view(template_name='accounts/login.html'), name='login'),
-    path('logout/', LogoutView.as_view(), name='logout'),
 ]

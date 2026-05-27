@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Login | NT Wildlife Recording System{% endblock %}
+
+{% block content %}
+    <h1 style="text-align: center;">Sign in to your account</h1>
+    <div class="card" style="max-width: 420px; margin: 0 auto;">
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="message message-error" style="margin-bottom:16px;">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            <div>
+                <label for="{{ form.username.id_for_label }}">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="message message-error">{{ form.username.errors.0 }}</div>
+                {% endif %}
+            </div>
+            <div>
+                <label for="{{ form.password.id_for_label }}">Password</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <div class="message message-error">{{ form.password.errors.0 }}</div>
+                {% endif %}
+            </div>
+            <button type="submit" class="button" style="width: 100%;">Log In</button>
+        </form>
+        <div style="margin-top: 18px; text-align: center; font-size: 14px;">
+            <span>Don't have an account?</span>
+            <a href="{% url 'register' %}" class="button-sm" style="margin-left:8px;">Register</a>
+        </div>
+        <div style="margin-top: 10px; text-align: center;">
+            <a href="{% url 'password_reset' %}" style="color:#2c9299;font-size:13px;">Forgot your password?</a>
+        </div>
+    </div>
+{% endblock %}
