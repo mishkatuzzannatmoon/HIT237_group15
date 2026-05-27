@@ -49,15 +49,14 @@ recordings/
 
 ## Commands:
 
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
+1. pip install -r requirements.txt
+2. python manage.py migrate
+3. python manage.py runserver
 
 
 ## Team Members
 
-- Mishkatuz Zannat Moon
-- Thien Hau Ngo
-- Yuanjian Dong
-- Md Rakibul Hassan Emon
-
+- Mishkatuz Zannat Moon (S385411)
+- Thien Hau Ngo (S390602)
+- Yuanjian Dong (S397151)
+- Md Rakibul Hassan Emon (S375332)
