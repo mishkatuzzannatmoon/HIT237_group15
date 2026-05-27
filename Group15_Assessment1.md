@@ -9,7 +9,6 @@ Section 1:
 
 1. Contribution & Grading
 - Each member will be assessed using structured peer evaluation for their individual performance towards the assessment. Core performance indicators will include attendance, reliability, communication, collaboration and quality of work.
-- Weekly meeting minutes will be documented to provide objective evidence for peer evaluation.
 - Each member will ensure their individual output meets the group’s requirements and deadlines. 
 
 2. Communication
@@ -20,7 +19,6 @@ Section 1:
 
 3. Task Allocation
 - Each member will be assigned to specific project roles and responsibilities. All individual tasks will be logged and tracked onto GitHub Repository to provide transparent and streamlined assessment progress.
-- Weekly deadlines will be implemented to monitor work progress and ensure accountability.
 - Team members must proactively report any issues that may delay progress to allow timely intervention. If a member is unavailable, workload will be redistributed to maintain consistent workflow to meet assessment goals. Consistent failure to meet individual responsibilities and deadlines will be notified to the Collaborative Learning Facilitator (CLF) to be resolved.
 
 - In our team, we will talk about three points, which are working styles, conflict resolution and academic integrity. 
@@ -46,11 +44,11 @@ Section 2:
 - Week 13: Assessment 4 submission.
 
 2. Task Breakdowns
-- Moon: Frontend development, including creating templates (upload, list, and detail pages), basic styling, and displaying data in the user interface. Also responsible for testing user interface functionality.
-- Hau: Backend development, including creating models (e.g., Recording, Species, Flag), defining database relationships, and contributing to Architectural Decision Records (ADR) related to data structure.
-- Peter: Views and business logic, including implementing class-based views (CBV), handling data retrieval using QuerySets, and connecting models to templates. Also supports testing of system functionality.
-- Emon: Architectural Decision Records (ADR) and integration, including documenting design decisions, ensuring components work together correctly, and supporting frontend tasks where needed.
-- All members will contribute to testing, debugging, documentation updates, and maintaining regular commits on GitHub.
+- Moon: Frontend development and user interface design, including templates, responsive layouts, filtering interface, anomaly display system, navigation improvements, styling consistency, and integration testing. Also contributed to refining documentation and improving overall usability of the system.
+- Hau: Backend development, including database models, authentication system (login/logout/register), ERD development, database relationships, migrations, and integration of backend functionality with the user interface.
+- Peter: Supported implementation of documentation review. Assisted with testing and reviewing system functionality during integration stages.
+- Emon: Architectural Decision Records (ADR), and integration support.
+- All members will participate in testing, debugging, GitHub collaboration, progress discussions, and maintaining version control through continuous commits and repository updates.
 
 3. Internal Checkpoints
 - Weekly meetings will be held via Microsoft Teams to review progress and assign tasks. Each member will provide updates.
