@@ -132,16 +132,14 @@ class RecordingDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return self.request.user == self.get_object().recorded_by
 
     def form_valid(self, form):
-        try:
-            services.delete_recording(
-                user=self.request.user,
-                recording=self.get_object(),
-            )
-            messages.success(self.request, 'Recording deleted.')
-            return redirect(self.success_url)
-        except PermissionDenied as e:
-            messages.error(self.request, str(e))
-            return redirect(self.success_url)
+        recording = self.object.recording
+        response = super().form_valid(form)
+
+        if not recording.flags.exists():
+            recording.is_anomaly = False
+            recording.save(update_fields=['is_anomaly'])
+
+        return response
 
 class AnomalyListView(ListView):
     model = AnomalyFlag
@@ -180,11 +178,14 @@ class AnomalyCreateView(LoginRequiredMixin, CreateView):
             messages.error(self.request, str(e.message))
             return self.form_invalid(form)
 
-class AnomalyUpdateView(LoginRequiredMixin, UpdateView):
+class AnomalyUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = AnomalyFlag
     form_class = AnomalyFlagForm
     template_name = 'recordings/anomaly_form.html'
     success_url = reverse_lazy('anomaly_list')
+
+    def test_func(self):
+        return self.request.user == self.get_object().flagged_by
 
     def form_valid(self, form):
         try:
@@ -200,10 +201,13 @@ class AnomalyUpdateView(LoginRequiredMixin, UpdateView):
             messages.error(self.request, str(e.message))
             return redirect(self.success_url)
 
-class AnomalyDeleteView(LoginRequiredMixin, DeleteView):
+class AnomalyDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = AnomalyFlag
     template_name = 'recordings/anomaly_confirm_delete.html'
     success_url = reverse_lazy('anomaly_list')
+
+    def test_func(self):
+        return self.request.user == self.get_object().flagged_by
 
     def form_valid(self, form):
         recording = self.object.recording
