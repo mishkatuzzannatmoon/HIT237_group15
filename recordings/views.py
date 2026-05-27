@@ -237,6 +237,11 @@ class RegisterView(View):
         return render(request, self.template_name, {'form': form})
 
 class LogoutView(View):
+    def get(self, request):
+        logout(request)
+        messages.info(request, 'You have been logged out.')
+        return redirect('login')
+
     def post(self, request):
         logout(request)
         messages.info(request, 'You have been logged out.')
