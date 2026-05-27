@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}{{ title|default:"Recordings" }} — NT Wildlife Recording System{% endblock %}
+
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
     <h1>🎵 NT Wildlife Recordings</h1>
@@ -63,7 +64,7 @@
                     <option value="">Any confidence</option>
                     <option value="high" {% if request.GET.confidence == 'high' %}selected{% endif %}>High (≥ 0.8)</option>
                     <option value="medium" {% if request.GET.confidence == 'medium' %}selected{% endif %}>Medium (0.5–0.8)</option>
-                    <option value="low" {% if request.GET.confidence == 'low' %}selected{% endif %}>Low (< 0.5)</option>
+                    <option value="low" {% if request.GET.confidence == 'low' %}selected{% endif %}>Low (&lt; 0.5)</option>
                 </select>
             </div>
 
@@ -93,77 +94,99 @@
 </div>
 
 {% if recordings %}
-    <table>
-        <thead>
-            <tr>
-                <th>🦁 Species</th>
-                <th>📊 Status</th>
-                <th>📝 Type</th>
-                <th>📍 Location</th>
-                <th>📅 Date</th>
-                <th>📈 Confidence</th>
-                <th>⚠️ Anomaly</th>
-                <th>⚙️ Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for recording in recordings %}
-            <tr>
-                <td>
-                    <strong>{{ recording.species.common_name }}</strong><br>
-                    <em style="color: #888; font-size: 12px;">{{ recording.species.scientific_name }}</em>
-                </td>
-                <td>
-                    {% with status=recording.species.conservation_status %}
-                        {% if status == 'CR' %}
-                            <span class="badge badge-red">{{ recording.species.get_conservation_status_display }}</span>
-                        {% elif status == 'EN' %}
-                            <span class="badge badge-orange">{{ recording.species.get_conservation_status_display }}</span>
-                        {% elif status == 'VU' %}
-                            <span class="badge badge-yellow">{{ recording.species.get_conservation_status_display }}</span>
-                        {% elif status == 'LC' %}
-                            <span class="badge badge-green">{{ recording.species.get_conservation_status_display }}</span>
-                        {% else %}
-                            <span class="badge badge-gray">{{ recording.species.get_conservation_status_display }}</span>
-                        {% endif %}
-                    {% endwith %}
-                </td>
-                <td>{{ recording.get_record_type_display }}</td>
-                <td>
-                    {% if recording.location_name %}
-                        <strong>{{ recording.location_name }}</strong><br>
-                        <span style="color: #888; font-size: 12px;">{{ recording.latitude }}, {{ recording.longitude }}</span>
+<table>
+    <thead>
+        <tr>
+            <th>🦁 Species</th>
+            <th>📊 Status</th>
+            <th>📝 Type</th>
+            <th>📍 Location</th>
+            <th>📅 Date</th>
+            <th>📈 Confidence</th>
+            <th>⚠️ Anomaly</th>
+            <th>⚙️ Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for recording in recordings %}
+        <tr>
+            <td>
+                <strong>{{ recording.species.common_name }}</strong><br>
+                <em style="color: #888; font-size: 12px;">{{ recording.species.scientific_name }}</em>
+            </td>
+
+            <td>
+                {% with status=recording.species.conservation_status %}
+                    {% if status == 'CR' %}
+                        <span class="badge badge-red">{{ recording.species.get_conservation_status_display }}</span>
+                    {% elif status == 'EN' %}
+                        <span class="badge badge-orange">{{ recording.species.get_conservation_status_display }}</span>
+                    {% elif status == 'VU' %}
+                        <span class="badge badge-yellow">{{ recording.species.get_conservation_status_display }}</span>
+                    {% elif status == 'LC' %}
+                        <span class="badge badge-green">{{ recording.species.get_conservation_status_display }}</span>
                     {% else %}
-                        <span style="color: #aaa;">—</span>
+                        <span class="badge badge-gray">{{ recording.species.get_conservation_status_display }}</span>
                     {% endif %}
-                </td>
-                <td>{{ recording.recorded_at|date:"d M Y H:i" }}</td>
-                <td>
-                    <strong style="font-size: 16px;">{{ recording.confidence_score }}</strong>
-                    <div style="width: 60px; height: 6px; background: #ecf0f1; border-radius: 3px; margin-top: 4px;">
-                        <div style="width: {{ recording.confidence_score|floatformat:0 }}%; height: 100%; background: {% if recording.confidence_score >= 0.8 %}#1e8449{% elif recording.confidence_score >= 0.5 %}#d35400{% else %}#c0392b{% endif %}; border-radius: 3px;"></div>
-                    </div>
-                </td>
-                <td>
-                    {% if recording.is_anomaly %}
-                        <span class="badge badge-red">Anomaly Flagged</span>
-                    {% else %}
-                        <span class="badge badge-green">Normal</span>
-                    {% endif %}
-                </td>
-                <td style="white-space: nowrap;">
-                    <a href="{% url 'recording_detail' recording.pk %}" class="button-sm">👁️ View</a>
-                    <a href="{% url 'recording_update' recording.pk %}" class="button-sm button-secondary">✏️ Edit</a>
-                    <a href="{% url 'recording_delete' recording.pk %}" class="button-sm button-danger">🗑️ Delete</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                {% endwith %}
+            </td>
+
+            <td>{{ recording.get_record_type_display }}</td>
+
+            <td>
+                {% if recording.location_name %}
+                    <strong>{{ recording.location_name }}</strong><br>
+                    <span style="color: #888; font-size: 12px;">{{ recording.latitude }}, {{ recording.longitude }}</span>
+                {% else %}
+                    <span style="color: #aaa;">—</span>
+                {% endif %}
+            </td>
+
+            <td>{{ recording.recorded_at|date:"d M Y H:i" }}</td>
+
+            <td>
+                <strong style="font-size: 16px;">{{ recording.confidence_score }}</strong>
+                <div style="width: 60px; height: 6px; background: #ecf0f1; border-radius: 3px; margin-top: 4px;">
+                    <div style="width: {{ recording.confidence_score|floatformat:0 }}%; height: 100%; background: {% if recording.confidence_score >= 0.8 %}#1e8449{% elif recording.confidence_score >= 0.5 %}#d35400{% else %}#c0392b{% endif %}; border-radius: 3px;"></div>
+                </div>
+            </td>
+
+            <td>
+                {% if recording.is_anomaly %}
+                    <span class="badge badge-red">Anomaly Flagged</span>
+                {% else %}
+                    <span class="badge badge-green">Normal</span>
+                {% endif %}
+            </td>
+
+            <td style="white-space: nowrap;">
+                <a href="{% url 'recording_detail' recording.pk %}" class="button-sm">👁️ View</a>
+                <a href="{% url 'recording_update' recording.pk %}" class="button-sm button-secondary">✏️ Edit</a>
+
+                {% if recording.is_anomaly %}
+                    <span class="button-sm button-danger" style="opacity: 0.7; cursor: not-allowed;">
+                        ⚠️ Flagged
+                    </span>
+                {% else %}
+                    <a href="{% url 'anomaly_create' recording.pk %}" class="button-sm button-secondary">
+                        ⚠️ Flag
+                    </a>
+                {% endif %}
+
+                <a href="{% url 'recording_delete' recording.pk %}" class="button-sm button-danger">🗑️ Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% else %}
-    <div class="card" style="text-align: center; border-left: none;">
-        <p style="font-size: 16px; color: #888; margin: 0;">📭 No recordings match your filters.</p>
-        <p style="font-size: 13px; color: #aaa; margin: 8px 0 0 0;">Try adjusting your search criteria or <a href="{% url 'recording_create' %}" style="color: #2c9299; text-decoration: none; font-weight: 600;">add a new recording</a></p>
-    </div>
+<div class="card" style="text-align: center; border-left: none;">
+    <p style="font-size: 16px; color: #888; margin: 0;">📭 No recordings match your filters.</p>
+    <p style="font-size: 13px; color: #aaa; margin: 8px 0 0 0;">
+        Try adjusting your search criteria or 
+        <a href="{% url 'recording_create' %}" style="color: #2c9299; text-decoration: none; font-weight: 600;">add a new recording</a>
+    </p>
+</div>
 {% endif %}
 {% endblock %}
