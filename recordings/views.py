@@ -8,29 +8,29 @@ from django.views import View
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
- 
+
 from .models import Species, AudioRecording, AnomalyFlag, ConservationStatus, RecordType
 from .forms import SpeciesForm, AudioRecordingForm, AnomalyFlagForm, RegisterForm
 from . import services
 
 class SpeciesListView(ListView):
-    model               = Species
-    template_name       = 'recordings/species_list.html'
+    model = Species
+    template_name = 'recordings/species_list.html'
     context_object_name = 'species_list'
- 
- 
+
+
 class SpeciesDetailView(DetailView):
-    model         = Species
+    model = Species
     template_name = 'recordings/species_detail.html'
- 
- 
+
+
 class SpeciesCreateView(LoginRequiredMixin, CreateView):
-    model         = Species
-    form_class    = SpeciesForm
+    model = Species
+    form_class = SpeciesForm
     template_name = 'recordings/species_form.html'
-    success_url   = reverse_lazy('species_list')
-    
-     def form_valid(self, form):
+    success_url = reverse_lazy('species_list')
+
+    def form_valid(self, form):
         try:
             services.create_species(form.cleaned_data)
             messages.success(self.request, 'Species added successfully.')
@@ -38,53 +38,52 @@ class SpeciesCreateView(LoginRequiredMixin, CreateView):
         except ValidationError as e:
             messages.error(self.request, str(e.message))
             return self.form_invalid(form)
- 
+
 class SpeciesUpdateView(LoginRequiredMixin, UpdateView):
-    model         = Species
-    form_class    = SpeciesForm
+    model = Species
+    form_class = SpeciesForm
     template_name = 'recordings/species_form.html'
-    success_url   = reverse_lazy('species_list')
- 
- 
+    success_url = reverse_lazy('species_list')
+
+
 class SpeciesDeleteView(LoginRequiredMixin, DeleteView):
-    model         = Species
+    model = Species
     template_name = 'recordings/species_confirm_delete.html'
-    success_url   = reverse_lazy('species_list')
- 
+    success_url = reverse_lazy('species_list')
+
 class RecordingListView(ListView):
-    model               = AudioRecording
-    template_name       = 'recordings/recording_list.html'
+    model = AudioRecording
+    template_name = 'recordings/recording_list.html'
     context_object_name = 'recordings'
- 
+
     def get_queryset(self):
         return (
-        AudioRecording.objects
-        .with_details()
-        .filter_by_params(self.request)
-    )
- 
-    def get_context_data(self, **kwargs):
+            AudioRecording.objects
+            .with_details()
+            .filter_by_params(self.request)
+        )
 
+    def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['all_species']           = Species.objects.order_by('common_name')
-        context['conservation_choices']  = ConservationStatus.choices
-        context['record_type_choices']   = RecordType.choices
+        context['all_species'] = Species.objects.order_by('common_name')
+        context['conservation_choices'] = ConservationStatus.choices
+        context['record_type_choices'] = RecordType.choices
         return context
- 
+
 class RecordingDetailView(DetailView):
-    model         = AudioRecording
+    model = AudioRecording
     template_name = 'recordings/recording_detail.html'
- 
+
     def get_queryset(self):
         return AudioRecording.objects.select_related('species', 'recorded_by').prefetch_related('flags')
- 
- 
+
+
 class RecordingCreateView(LoginRequiredMixin, CreateView):
-    model         = AudioRecording
-    form_class    = AudioRecordingForm
+    model = AudioRecording
+    form_class = AudioRecordingForm
     template_name = 'recordings/recording_form.html'
-    success_url   = reverse_lazy('recording_list')
- 
+    success_url = reverse_lazy('recording_list')
+
     def form_valid(self, form):
         try:
             services.create_recording(
@@ -96,17 +95,17 @@ class RecordingCreateView(LoginRequiredMixin, CreateView):
         except ValidationError as e:
             messages.error(self.request, str(e.message))
             return self.form_invalid(form)
- 
- 
+
+
 class RecordingUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    model         = AudioRecording
-    form_class    = AudioRecordingForm
+    model = AudioRecording
+    form_class = AudioRecordingForm
     template_name = 'recordings/recording_form.html'
-    success_url   = reverse_lazy('recording_list')
- 
-   def test_func(self):
+    success_url = reverse_lazy('recording_list')
+
+    def test_func(self):
         return self.request.user == self.get_object().recorded_by
- 
+
     def form_valid(self, form):
         try:
             services.update_recording(
@@ -122,15 +121,15 @@ class RecordingUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         except ValidationError as e:
             messages.error(self.request, str(e.message))
             return self.form_invalid(form)
-            
-class RecordingDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
-    model         = AudioRecording
-    template_name = 'recordings/recording_confirm_delete.html'
-    success_url   = reverse_lazy('recording_list')
 
-  def test_func(self):
+class RecordingDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = AudioRecording
+    template_name = 'recordings/recording_confirm_delete.html'
+    success_url = reverse_lazy('recording_list')
+
+    def test_func(self):
         return self.request.user == self.get_object().recorded_by
- 
+
     def form_valid(self, form):
         try:
             services.delete_recording(
@@ -142,21 +141,21 @@ class RecordingDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         except PermissionDenied as e:
             messages.error(self.request, str(e))
             return redirect(self.success_url)
- 
+
 class AnomalyListView(ListView):
-    model               = AnomalyFlag
-    template_name       = 'recordings/anomaly_list.html'
+    model = AnomalyFlag
+    template_name = 'recordings/anomaly_list.html'
     context_object_name = 'anomalies'
- 
+
     def get_queryset(self):
         return AnomalyFlag.objects.select_related('recording__species', 'flagged_by')
- 
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['open_flags_count'] = self.get_queryset().filter(resolved=False).count()
         context['resolved_flags_count'] = self.get_queryset().filter(resolved=True).count()
         return context
- 
+
 class AnomalyCreateView(LoginRequiredMixin, CreateView):
     model = AnomalyFlag
     form_class = AnomalyFlagForm
@@ -179,12 +178,12 @@ class AnomalyCreateView(LoginRequiredMixin, CreateView):
         except ValidationError as e: 
             messages.error(self.request, str(e.message))
             return self.form_invalid(form)
- 
+
 class AnomalyUpdateView(LoginRequiredMixin, UpdateView):
-    model         = AnomalyFlag
-    form_class    = AnomalyFlagForm
+    model = AnomalyFlag
+    form_class = AnomalyFlagForm
     template_name = 'recordings/anomaly_form.html'
-    success_url   = reverse_lazy('anomaly_list')
+    success_url = reverse_lazy('anomaly_list')
 
     def form_valid(self, form):
         try:
@@ -199,8 +198,7 @@ class AnomalyUpdateView(LoginRequiredMixin, UpdateView):
         except ValidationError as e:
             messages.error(self.request, str(e.message))
             return redirect(self.success_url)
- 
- 
+
 class AnomalyDeleteView(LoginRequiredMixin, DeleteView):
     model = AnomalyFlag
     template_name = 'recordings/anomaly_confirm_delete.html'
@@ -216,16 +214,15 @@ class AnomalyDeleteView(LoginRequiredMixin, DeleteView):
 
         return response
 
- 
 class RegisterView(View):
-    
+
     template_name = 'accounts/register.html'
- 
+
     def get(self, request):
         if request.user.is_authenticated:
             return redirect('recording_list')
         return render(request, self.template_name, {'form': RegisterForm()})
- 
+
     def post(self, request):
         form = RegisterForm(request.POST)
         if form.is_valid():
@@ -238,8 +235,7 @@ class RegisterView(View):
                 messages.error(request, 'Registration failed. Please try again.')
                 return render(request, self.template_name, {'form': form})
         return render(request, self.template_name, {'form': form})
- 
- 
+
 class LogoutView(View):
     def post(self, request):
         logout(request)
