@@ -106,7 +106,11 @@ class RecordingUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def test_func(self):
         return self.request.user == self.get_object().recorded_by
-
+ 
+    def handle_no_permission(self):
+        messages.error(self.request, 'You can only edit your own recordings.')
+        return redirect('recording_list')
+ 
     def form_valid(self, form):
         try:
             services.update_recording(
@@ -123,6 +127,7 @@ class RecordingUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             messages.error(self.request, str(e.message))
             return self.form_invalid(form)
 
+
 class RecordingDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = AudioRecording
     template_name = 'recordings/recording_confirm_delete.html'
@@ -130,14 +135,22 @@ class RecordingDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def test_func(self):
         return self.request.user == self.get_object().recorded_by
-
+ 
+    def handle_no_permission(self):
+        messages.error(self.request, 'You can only delete your own recordings.')
+        return redirect('recording_list')
+ 
     def form_valid(self, form):
-        recording = self.object.recording
-        response = super().form_valid(form)
-
-        if not recording.flags.exists():
-            recording.is_anomaly = False
-            recording.save(update_fields=['is_anomaly'])
+        try:
+            services.delete_recording(
+                user=self.request.user,
+                recording=self.get_object(),
+            )
+            messages.success(self.request, 'Recording deleted.')
+            return redirect(self.success_url)
+        except PermissionDenied as e:
+            messages.error(self.request, str(e))
+            return redirect(self.success_url)
 
         return response
 
@@ -187,6 +200,10 @@ class AnomalyUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def test_func(self):
         return self.request.user == self.get_object().flagged_by
 
+    def handle_no_permission(self):
+        messages.error(self.request, 'You can only edit your own anomaly flags.')
+        return redirect('anomaly_list')
+
     def form_valid(self, form):
         try:
             response = super().form_valid(form)
@@ -197,9 +214,12 @@ class AnomalyUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                 )
                 messages.success(self.request, 'Anomaly flag resolved.')
             return response
+        except PermissionDenied as e:
+            messages.error(self.request, str(e))
+            return redirect(self.success_url)
         except ValidationError as e:
             messages.error(self.request, str(e.message))
-            return redirect(self.success_url)
+            return self.form_invalid(form)
 
 class AnomalyDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = AnomalyFlag
@@ -209,15 +229,24 @@ class AnomalyDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self):
         return self.request.user == self.get_object().flagged_by
 
+    def handle_no_permission(self):
+        messages.error(self.request, 'You can only delete your own anomaly flags.')
+        return redirect('anomaly_list')
+
     def form_valid(self, form):
-        recording = self.object.recording
-        response = super().form_valid(form)
-
-        if not recording.flags.exists():
-            recording.is_anomaly = False
-            recording.save(update_fields=['is_anomaly'])
-
-        return response
+        try:
+            recording = self.object.recording
+            response = super().form_valid(form)
+            
+            if not recording.flags.exists():
+                recording.is_anomaly = False
+                recording.save(update_fields=['is_anomaly'])
+            
+            messages.success(self.request, 'Anomaly flag deleted.')
+            return response
+        except PermissionDenied as e:
+            messages.error(self.request, str(e))
+            return redirect(self.success_url)
 
 class RegisterView(View):
 
